@@ -13,6 +13,10 @@ Registration passwords are 12–128 characters, require at least one letter and 
 
 Run `php artisan test` and `vendor\\bin\\pint --test` before integration. The development seeder creates reporter, technician, administrator, and inactive fixtures with the factory's development-only password; public registration never creates privileged users.
 
+## Reference data API
+
+Administrators manage retained departments and categories under `/api/admin`. Every update supplies the current integer `version`; stale changes return `409`. Authenticated users load new-work choices from `/api/options/departments` and `/api/options/departments/{id}/categories`. There are no permanent-delete endpoints.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

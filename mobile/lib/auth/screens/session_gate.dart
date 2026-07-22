@@ -4,10 +4,16 @@ import '../state/auth_controller.dart';
 import 'profile_screen.dart';
 import 'register_screen.dart';
 import 'sign_in_screen.dart';
+import '../../reference_data/state/reference_controller.dart';
 
 class SessionGate extends StatefulWidget {
-  const SessionGate({required this.controller, super.key});
+  const SessionGate({
+    required this.controller,
+    this.referenceController,
+    super.key,
+  });
   final AuthController controller;
+  final ReferenceController? referenceController;
 
   @override
   State<SessionGate> createState() => _SessionGateState();
@@ -40,7 +46,10 @@ class _SessionGateState extends State<SessionGate> {
     }
     if (state.status == AuthViewStatus.authenticated ||
         (state.isLoading && state.profile != null)) {
-      return ProfileScreen(controller: widget.controller);
+      return ProfileScreen(
+        controller: widget.controller,
+        referenceController: widget.referenceController,
+      );
     }
     if (state.status == AuthViewStatus.offline ||
         state.status == AuthViewStatus.serverError ||

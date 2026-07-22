@@ -12,6 +12,8 @@ The default URL is the Android emulator host alias above. Registration creates r
 
 Validate with `dart format --output=none --set-exit-if-changed lib test`, `flutter analyze`, and `flutter test`.
 
+Administrators see department and category management controls on their authenticated profile. Reference-data state distinguishes loading, populated/empty success, validation, authorization loss, offline, stale conflict, and server/contract failure. Reusable active-option loading is available for later ticket forms without implementing tickets.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -12,6 +14,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $facilities = Department::factory()->create([
+            'name' => 'Facilities',
+            'normalized_name' => 'facilities',
+        ]);
+        Category::factory()->create([
+            'department_id' => $facilities->id,
+            'name' => 'Electrical',
+            'normalized_name' => 'electrical',
+        ]);
+
         User::factory()->create([
             'name' => 'Development Reporter',
             'email' => 'reporter@fixflow.test',

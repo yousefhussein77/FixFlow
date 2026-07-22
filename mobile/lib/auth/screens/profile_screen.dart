@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../state/auth_controller.dart';
+import '../../reference_data/screens/department_screen.dart';
+import '../../reference_data/screens/category_screen.dart';
+import '../../reference_data/state/reference_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({required this.controller, super.key});
+  const ProfileScreen({
+    required this.controller,
+    this.referenceController,
+    super.key,
+  });
   final AuthController controller;
+  final ReferenceController? referenceController;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -61,6 +69,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(profile.email),
                 const SizedBox(height: 8),
                 Text(profile.role),
+                if (profile.role == 'administrator' &&
+                    widget.referenceController != null) ...[
+                  FilledButton(
+                    key: const Key('manage_departments'),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DepartmentScreen(
+                          controller: widget.referenceController!,
+                        ),
+                      ),
+                    ),
+                    child: const Text('Manage departments'),
+                  ),
+                  OutlinedButton(
+                    key: const Key('manage_categories'),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CategoryScreen(
+                          controller: widget.referenceController!,
+                        ),
+                      ),
+                    ),
+                    child: const Text('Manage categories'),
+                  ),
+                ],
               ],
               if (state.message != null) ...[
                 Text(
