@@ -1,0 +1,199 @@
+openapi: 3.1.0
+info:
+  title: FixFlow Authentication API
+  version: 1.0.0
+  description: Initial reporter registration and authenticated session contract.
+servers:
+  - url: /api
+paths:
+  /register:
+    post:
+      operationId: registerReporter
+      summary: Register and authenticate a reporter
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Reporter registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccess'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /login:
+    post:
+      operationId: signIn
+      summary: Sign in an active account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccess'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /profile:
+    get:
+      operationId: currentProfile
+      summary: Return the current active token owner's profile
+      responses:
+        '200':
+          description: Current profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileSuccess'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /logout:
+    post:
+      operationId: signOut
+      summary: Revoke the current bearer token
+      responses:
+        '200':
+          description: Signed out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageSuccess'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [name, email, password, password_confirmation]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        password:
+          type: string
+          format: password
+          minLength: 12
+          maxLength: 128
+        password_confirmation:
+          type: string
+          format: password
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    Profile:
+      type: object
+      additionalProperties: false
+      required: [id, name, email, role, is_active, created_at]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [reporter, technician, administrator] }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+    AuthData:
+      type: object
+      required: [user, token]
+      properties:
+        user: { $ref: '#/components/schemas/Profile' }
+        token: { type: string, writeOnly: true }
+    AuthSuccess:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/AuthData' }
+    ProfileSuccess:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/Profile' }
+    MessageSuccess:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - type: object
+          properties:
+            data: { type: 'null' }
+    SuccessEnvelope:
+      type: object
+      required: [success, message, data, errors, code]
+      properties:
+        success: { const: true }
+        message: { type: string }
+        data: {}
+        errors: { type: 'null' }
+        code: { type: 'null' }
+    ErrorEnvelope:
+      type: object
+      required: [success, message, data, errors, code]
+      properties:
+        success: { const: false }
+        message: { type: string }
+        data: { type: 'null' }
+        errors:
+          oneOf:
+            - type: object
+              additionalProperties:
+                type: array
+                items: { type: string }
+            - type: 'null'
+        code: { type: string }
+  responses:
+    ValidationError:
+      description: Request validation failed with no state change
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    UnauthenticatedError:
+      description: Credentials or active session are not accepted
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    ServerError:
+      description: Safe unexpected service failure
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+security:
+  - bearerAuth: []

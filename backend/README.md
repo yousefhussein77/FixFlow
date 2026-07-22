@@ -1,3 +1,18 @@
+# FixFlow API
+
+## Authentication API
+
+FixFlow exposes a Sanctum bearer-token authentication API:
+
+- `POST /api/register` creates an active reporter only. Required fields: `name`, `email`, `password`, and `password_confirmation`.
+- `POST /api/login` signs in an active account with email and password.
+- `GET /api/profile` returns only the bearer token owner's profile.
+- `POST /api/logout` revokes only the bearer token used for the request.
+
+Registration passwords are 12–128 characters, require at least one letter and one number, and must match confirmation. Emails are trimmed and lowercased. All responses use the envelope documented in `specs/003-user-auth/contracts/auth.openapi.yaml`.
+
+Run `php artisan test` and `vendor\\bin\\pint --test` before integration. The development seeder creates reporter, technician, administrator, and inactive fixtures with the factory's development-only password; public registration never creates privileged users.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

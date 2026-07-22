@@ -1,6 +1,16 @@
 # fixflow
 
-A new Flutter project.
+## Authentication client
+
+The Flutter app provides registration, sign-in, session restoration, own-profile, and sign-out flows. Tokens are stored only through platform-protected secure storage. Configure the API when running:
+
+```powershell
+flutter run --dart-define=FIXFLOW_API_URL=http://10.0.2.2:8000
+```
+
+The default URL is the Android emulator host alias above. Registration creates reporter accounts only. Authentication screens distinguish validation, unauthenticated, offline, secure-storage, and server/contract failures and disable duplicate submission while loading.
+
+Validate with `dart format --output=none --set-exit-if-changed lib test`, `flutter analyze`, and `flutter test`.
 
 ## Getting Started
 

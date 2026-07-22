@@ -1,0 +1,157 @@
+import 'package:flutter/foundation.dart';
+
+import '../models/auth_models.dart';
+import '../repositories/auth_repository.dart';
+
+enum AuthViewStatus {
+  restoring,
+  signedOut,
+  loading,
+  authenticated,
+  validationError,
+  unauthenticated,
+  offline,
+  serverError,
+  storageError,
+}
+
+class AuthViewState {
+  const AuthViewState({
+    required this.status,
+    this.profile,
+    this.message,
+    this.fieldErrors = const {},
+  });
+
+  const AuthViewState.signedOut() : this(status: AuthViewStatus.signedOut);
+
+  final AuthViewStatus status;
+  final UserProfile? profile;
+  final String? message;
+  final Map<String, List<String>> fieldErrors;
+
+  bool get isLoading =>
+      status == AuthViewStatus.loading || status == AuthViewStatus.restoring;
+}
+
+class AuthController extends ChangeNotifier {
+  AuthController(this._repository, {bool restoreOnCreate = false})
+    : _state = restoreOnCreate
+          ? const AuthViewState(status: AuthViewStatus.restoring)
+          : const AuthViewState.signedOut() {
+    if (restoreOnCreate) restore();
+  }
+
+  final AuthRepository _repository;
+  AuthViewState _state;
+  int _generation = 0;
+
+  AuthViewState get state => _state;
+
+  void _set(AuthViewState value) {
+    _state = value;
+    notifyListeners();
+  }
+
+  Future<void> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final generation = ++_generation;
+    _set(const AuthViewState(status: AuthViewStatus.loading));
+    try {
+      final profile = await _repository.register(
+        name: name,
+        email: email,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
+      );
+      if (generation != _generation) return;
+      _set(
+        AuthViewState(status: AuthViewStatus.authenticated, profile: profile),
+      );
+    } on AuthFailure catch (failure) {
+      if (generation == _generation) _setFailure(failure);
+    }
+  }
+
+  Future<void> login({required String email, required String password}) async {
+    final generation = ++_generation;
+    _set(const AuthViewState(status: AuthViewStatus.loading));
+    try {
+      final profile = await _repository.login(email: email, password: password);
+      if (generation != _generation) return;
+      _set(
+        AuthViewState(status: AuthViewStatus.authenticated, profile: profile),
+      );
+    } on AuthFailure catch (failure) {
+      if (generation == _generation) _setFailure(failure);
+    }
+  }
+
+  Future<void> restore() async {
+    final generation = ++_generation;
+    _set(const AuthViewState(status: AuthViewStatus.restoring));
+    try {
+      final profile = await _repository.restore();
+      if (generation != _generation) return;
+      _set(
+        profile == null
+            ? const AuthViewState.signedOut()
+            : AuthViewState(
+                status: AuthViewStatus.authenticated,
+                profile: profile,
+              ),
+      );
+    } on AuthFailure catch (failure) {
+      if (generation == _generation) _setFailure(failure);
+    }
+  }
+
+  Future<void> refreshProfile() async {
+    final generation = ++_generation;
+    final previous = state.profile;
+    _set(AuthViewState(status: AuthViewStatus.loading, profile: previous));
+    try {
+      final profile = await _repository.profile();
+      if (generation != _generation) return;
+      _set(
+        AuthViewState(status: AuthViewStatus.authenticated, profile: profile),
+      );
+    } on AuthFailure catch (failure) {
+      if (generation == _generation) _setFailure(failure);
+    }
+  }
+
+  Future<void> logout() async {
+    ++_generation;
+    _set(const AuthViewState(status: AuthViewStatus.loading));
+    try {
+      await _repository.logout();
+    } on AuthFailure {
+      // Local sign-out remains authoritative for every remote failure.
+    } finally {
+      _set(const AuthViewState.signedOut());
+    }
+  }
+
+  void _setFailure(AuthFailure failure) {
+    final status = switch (failure.kind) {
+      AuthFailureKind.validation => AuthViewStatus.validationError,
+      AuthFailureKind.unauthenticated => AuthViewStatus.unauthenticated,
+      AuthFailureKind.offline => AuthViewStatus.offline,
+      AuthFailureKind.storage => AuthViewStatus.storageError,
+      AuthFailureKind.server ||
+      AuthFailureKind.contract => AuthViewStatus.serverError,
+    };
+    _set(
+      AuthViewState(
+        status: status,
+        message: failure.message,
+        fieldErrors: failure.fieldErrors,
+      ),
+    );
+  }
+}
