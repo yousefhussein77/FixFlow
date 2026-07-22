@@ -1,0 +1,61 @@
+.agents/
+
+# Local environment and secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+*.key
+*.pem
+
+# PHP / Laravel generated content
+vendor/
+**/vendor/
+storage/logs/
+**/storage/logs/
+storage/framework/cache/
+**/storage/framework/cache/
+storage/framework/sessions/
+**/storage/framework/sessions/
+storage/framework/views/
+**/storage/framework/views/
+bootstrap/cache/*.php
+**/bootstrap/cache/*.php
+*.cache
+
+# Flutter / Dart generated content
+.dart_tool/
+**/.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+.packages
+**/.packages
+build/
+**/build/
+coverage/
+**/coverage/
+
+# Android and device-local files
+local.properties
+**/local.properties
+*.jks
+*.keystore
+captures/
+**/captures/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Editors and operating systems
+.vscode/
+.idea/
+**/.idea/
+*.iml
+.DS_Store
+Thumbs.db

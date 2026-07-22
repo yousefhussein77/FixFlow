@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: FixFlow Foundation Health Contract
+  version: 0.1.0
+  description: >-
+    Non-business readiness contract used only to verify that the API-only backend
+    process is running. It defines no authentication or domain behavior.
+paths:
+  /up:
+    get:
+      operationId: getFoundationHealth
+      summary: Confirm that the backend process is ready to answer requests
+      security: []
+      responses:
+        "200":
+          description: Backend process is running.
+          content:
+            text/html:
+              schema:
+                type: string
+        "503":
+          description: Backend process is not ready when a future health check fails.
+components: {}
