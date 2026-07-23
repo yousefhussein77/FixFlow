@@ -5,15 +5,21 @@ import 'profile_screen.dart';
 import 'register_screen.dart';
 import 'sign_in_screen.dart';
 import '../../reference_data/state/reference_controller.dart';
+import '../../tickets/repositories/ticket_repository.dart';
+import '../../tickets/services/ticket_photo_picker.dart';
 
 class SessionGate extends StatefulWidget {
   const SessionGate({
     required this.controller,
     this.referenceController,
+    this.ticketRepository,
+    this.ticketPhotoPicker,
     super.key,
   });
   final AuthController controller;
   final ReferenceController? referenceController;
+  final TicketRepository? ticketRepository;
+  final TicketPhotoPicker? ticketPhotoPicker;
 
   @override
   State<SessionGate> createState() => _SessionGateState();
@@ -49,6 +55,8 @@ class _SessionGateState extends State<SessionGate> {
       return ProfileScreen(
         controller: widget.controller,
         referenceController: widget.referenceController,
+        ticketRepository: widget.ticketRepository,
+        ticketPhotoPicker: widget.ticketPhotoPicker,
       );
     }
     if (state.status == AuthViewStatus.offline ||

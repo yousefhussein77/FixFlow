@@ -1,0 +1,100 @@
+openapi: 3.1.0
+info:
+  title: FixFlow Reporter Ticket API
+  version: 1.0.0
+  description: Additive v1 reporter-only ticket creation and owned tracking contract.
+servers:
+  - url: /api
+security:
+  - sanctumBearer: []
+paths:
+  /reporter/options/departments:
+    get:
+      operationId: reporterDepartmentOptions
+      responses:
+        '200': { $ref: '#/components/responses/OptionList' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /reporter/options/departments/{department}/categories:
+    get:
+      operationId: reporterCategoryOptions
+      parameters:
+        - name: department
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200': { $ref: '#/components/responses/OptionList' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Validation' }
+  /reporter/tickets:
+    post:
+      operationId: createReporterTicket
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [submission_token, title, description, department_id, category_id, priority, location]
+              properties:
+                submission_token: { type: string, format: uuid }
+                title: { type: string, minLength: 1, maxLength: 160 }
+                description: { type: string, minLength: 1, maxLength: 5000 }
+                department_id: { type: integer }
+                category_id: { type: integer }
+                priority: { type: string, enum: [low, medium, high, urgent] }
+                location: { type: string, minLength: 1, maxLength: 255 }
+                photos:
+                  type: array
+                  maxItems: 5
+                  items: { type: string, format: binary, contentMediaType: image/jpeg }
+      responses:
+        '201': { $ref: '#/components/responses/TicketDetail' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    get:
+      operationId: listReporterTickets
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200': { $ref: '#/components/responses/TicketList' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Validation' }
+  /reporter/tickets/{reference}:
+    get:
+      operationId: showReporterTicket
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema: { type: string, pattern: '^TKT-[A-Z0-9]{12}$' }
+      responses:
+        '200': { $ref: '#/components/responses/TicketDetail' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+components:
+  securitySchemes:
+    sanctumBearer: { type: http, scheme: bearer }
+  schemas:
+    Option: { type: object, required: [id, name], properties: { id: { type: integer }, name: { type: string } } }
+    Photo: { type: object, required: [id, name, mime_type, size, position], properties: { id: { type: integer }, name: { type: string }, mime_type: { type: string }, size: { type: integer }, position: { type: integer } } }
+    TicketSummary: { type: object, required: [reference, title, status, priority, department, category, created_at], properties: { reference: { type: string }, title: { type: string }, status: { type: string, const: new }, priority: { type: string }, department: { $ref: '#/components/schemas/Option' }, category: { $ref: '#/components/schemas/Option' }, created_at: { type: string, format: date-time } } }
+    TicketDetail: { allOf: [{ $ref: '#/components/schemas/TicketSummary' }, { type: object, required: [description, location, photos, updated_at], properties: { description: { type: string }, location: { type: string }, photos: { type: array, maxItems: 5, items: { $ref: '#/components/schemas/Photo' } }, updated_at: { type: string, format: date-time } } }] }
+  responses:
+    OptionList: { description: Options, content: { application/json: { schema: { type: object, properties: { success: { const: true }, message: { type: string }, data: { type: array, items: { $ref: '#/components/schemas/Option' } }, errors: { type: 'null' }, code: { type: 'null' } } } } } }
+    TicketDetail: { description: Ticket, content: { application/json: { schema: { type: object, properties: { success: { const: true }, message: { type: string }, data: { $ref: '#/components/schemas/TicketDetail' }, errors: { type: 'null' }, code: { type: 'null' } } } } } }
+    TicketList: { description: Owned page, content: { application/json: { schema: { type: object, properties: { success: { const: true }, message: { type: string }, data: { type: array, items: { $ref: '#/components/schemas/TicketSummary' } }, meta: { type: object } } } } } }
+    Validation: { description: Validation error }
+    Unauthenticated: { description: UNAUTHENTICATED error envelope }
+    Forbidden: { description: FORBIDDEN error envelope without ticket data }
+    NotFound: { description: TICKET_NOT_FOUND envelope identical for unknown and non-owned tickets }
+    Conflict: { description: SUBMISSION_CONFLICT error envelope }
+    ServerError: { description: SERVER_ERROR sanitized error envelope }

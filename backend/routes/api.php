@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\ReferenceOptionController;
+use App\Http\Controllers\Api\TicketController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -14,6 +15,14 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/options/departments', [ReferenceOptionController::class, 'departments']);
     Route::get('/options/departments/{departmentId}/categories', [ReferenceOptionController::class, 'categories']);
+
+    Route::prefix('reporter')->middleware('reporter')->group(function (): void {
+        Route::get('/options/departments', [ReferenceOptionController::class, 'departments']);
+        Route::get('/options/departments/{departmentId}/categories', [ReferenceOptionController::class, 'categories']);
+        Route::get('/tickets', [TicketController::class, 'index']);
+        Route::post('/tickets', [TicketController::class, 'store']);
+        Route::get('/tickets/{reference}', [TicketController::class, 'show']);
+    });
 
     Route::prefix('admin')->middleware('administrator')->group(function (): void {
         Route::get('/departments', [DepartmentController::class, 'index']);

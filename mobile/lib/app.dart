@@ -3,15 +3,21 @@ import 'package:flutter/material.dart';
 import 'auth/screens/session_gate.dart';
 import 'auth/state/auth_controller.dart';
 import 'reference_data/state/reference_controller.dart';
+import 'tickets/repositories/ticket_repository.dart';
+import 'tickets/services/ticket_photo_picker.dart';
 
 class FixFlowApp extends StatelessWidget {
   const FixFlowApp({
     required this.controller,
     this.referenceController,
+    this.ticketRepository,
+    this.ticketPhotoPicker,
     super.key,
   });
   final AuthController controller;
   final ReferenceController? referenceController;
+  final TicketRepository? ticketRepository;
+  final TicketPhotoPicker? ticketPhotoPicker;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +30,8 @@ class FixFlowApp extends StatelessWidget {
       home: SessionGate(
         controller: controller,
         referenceController: referenceController,
+        ticketRepository: ticketRepository,
+        ticketPhotoPicker: ticketPhotoPicker,
       ),
     );
   }

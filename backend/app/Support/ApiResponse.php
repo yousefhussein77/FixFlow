@@ -6,15 +6,20 @@ use Illuminate\Http\JsonResponse;
 
 final class ApiResponse
 {
-    public static function success(string $message, mixed $data = null, int $status = 200): JsonResponse
+    public static function success(string $message, mixed $data = null, int $status = 200, ?array $meta = null): JsonResponse
     {
-        return response()->json([
+        $payload = [
             'success' => true,
             'message' => $message,
             'data' => $data,
             'errors' => null,
             'code' => null,
-        ], $status);
+        ];
+        if ($meta !== null) {
+            $payload['meta'] = $meta;
+        }
+
+        return response()->json($payload, $status);
     }
 
     public static function error(

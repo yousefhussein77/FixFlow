@@ -4,15 +4,24 @@ import '../state/auth_controller.dart';
 import '../../reference_data/screens/department_screen.dart';
 import '../../reference_data/screens/category_screen.dart';
 import '../../reference_data/state/reference_controller.dart';
+import '../../tickets/repositories/ticket_repository.dart';
+import '../../tickets/screens/create_ticket_screen.dart';
+import '../../tickets/screens/my_tickets_screen.dart';
+import '../../tickets/state/ticket_creation_controller.dart';
+import '../../tickets/services/ticket_photo_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     required this.controller,
     this.referenceController,
+    this.ticketRepository,
+    this.ticketPhotoPicker,
     super.key,
   });
   final AuthController controller;
   final ReferenceController? referenceController;
+  final TicketRepository? ticketRepository;
+  final TicketPhotoPicker? ticketPhotoPicker;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -69,6 +78,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(profile.email),
                 const SizedBox(height: 8),
                 Text(profile.role),
+                if (profile.role == 'reporter' &&
+                    widget.ticketRepository != null) ...[
+                  FilledButton(
+                    key: const Key('create_ticket'),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CreateTicketScreen(
+                          controller: TicketCreationController(
+                            widget.ticketRepository!,
+                          ),
+                          pickPhotos: widget.ticketPhotoPicker?.pick,
+                        ),
+                      ),
+                    ),
+                    child: const Text('Create ticket'),
+                  ),
+                  OutlinedButton(
+                    key: const Key('my_tickets'),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MyTicketsScreen(
+                          repository: widget.ticketRepository!,
+                        ),
+                      ),
+                    ),
+                    child: const Text('My tickets'),
+                  ),
+                ],
                 if (profile.role == 'administrator' &&
                     widget.referenceController != null) ...[
                   FilledButton(

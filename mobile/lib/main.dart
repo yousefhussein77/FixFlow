@@ -8,6 +8,9 @@ import 'auth/state/auth_controller.dart';
 import 'reference_data/repositories/reference_repository.dart';
 import 'reference_data/services/reference_api_service.dart';
 import 'reference_data/state/reference_controller.dart';
+import 'tickets/repositories/ticket_repository.dart';
+import 'tickets/services/ticket_api_service.dart';
+import 'tickets/services/ticket_photo_picker.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +32,11 @@ void main() {
           tokenStore,
         ),
       ),
+      ticketRepository: TicketRepositoryImpl(
+        TicketApiService(Uri.parse(apiUrl)),
+        tokenStore,
+      ),
+      ticketPhotoPicker: const TicketPhotoPicker(),
     ),
   );
 }
