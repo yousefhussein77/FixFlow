@@ -1,0 +1,294 @@
+openapi: 3.1.0
+info:
+  title: FixFlow Ticket Comments API
+  version: 1.0.0
+  description: Role-scoped immutable plain-text ticket comments for core User Story 4.
+servers:
+  - url: /
+security:
+  - sanctum: []
+tags:
+  - name: Reporter Comments
+  - name: Technician Comments
+  - name: Administrator Comments
+paths:
+  /api/reporter/tickets/{reference}/comments:
+    parameters:
+      - $ref: '#/components/parameters/TicketReference'
+    get:
+      tags: [Reporter Comments]
+      summary: List comments for the authenticated reporter's own ticket
+      responses:
+        '200': {$ref: '#/components/responses/CommentList'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/ConcealedTicketNotFound'}
+        '500': {$ref: '#/components/responses/ServerError'}
+    post:
+      tags: [Reporter Comments]
+      summary: Add a comment to the authenticated reporter's own ticket
+      requestBody: {$ref: '#/components/requestBodies/CreateComment'}
+      responses:
+        '201': {$ref: '#/components/responses/CommentCreated'}
+        '200': {$ref: '#/components/responses/CommentReplay'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/ConcealedTicketNotFound'}
+        '422': {$ref: '#/components/responses/Validation'}
+        '500': {$ref: '#/components/responses/ServerError'}
+  /api/technician/tickets/{reference}/comments:
+    parameters:
+      - $ref: '#/components/parameters/TicketReference'
+    get:
+      tags: [Technician Comments]
+      summary: List comments while authenticated technician is current assignee
+      responses:
+        '200': {$ref: '#/components/responses/CommentList'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/ConcealedTicketNotFound'}
+        '500': {$ref: '#/components/responses/ServerError'}
+    post:
+      tags: [Technician Comments]
+      summary: Add a comment while authenticated technician is current assignee
+      requestBody: {$ref: '#/components/requestBodies/CreateComment'}
+      responses:
+        '201': {$ref: '#/components/responses/CommentCreated'}
+        '200': {$ref: '#/components/responses/CommentReplay'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/ConcealedTicketNotFound'}
+        '422': {$ref: '#/components/responses/Validation'}
+        '500': {$ref: '#/components/responses/ServerError'}
+  /api/admin/tickets/{reference}/comments:
+    parameters:
+      - $ref: '#/components/parameters/TicketReference'
+    get:
+      tags: [Administrator Comments]
+      summary: List comments on a ticket within administrator oversight
+      responses:
+        '200': {$ref: '#/components/responses/CommentList'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/TicketNotFound'}
+        '500': {$ref: '#/components/responses/ServerError'}
+    post:
+      tags: [Administrator Comments]
+      summary: Add a comment on a ticket within administrator oversight
+      requestBody: {$ref: '#/components/requestBodies/CreateComment'}
+      responses:
+        '201': {$ref: '#/components/responses/CommentCreated'}
+        '200': {$ref: '#/components/responses/CommentReplay'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/TicketNotFound'}
+        '422': {$ref: '#/components/responses/Validation'}
+        '500': {$ref: '#/components/responses/ServerError'}
+components:
+  securitySchemes:
+    sanctum:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum token
+  parameters:
+    TicketReference:
+      name: reference
+      in: path
+      required: true
+      schema: {type: string, minLength: 1, maxLength: 64}
+  requestBodies:
+    CreateComment:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/CreateCommentRequest'}
+          examples:
+            workNote:
+              value:
+                content: Replacement valve is expected tomorrow.
+                submission_token: 8d2abec8-b1ee-49fb-9e7e-93eec3d5dfb1
+  schemas:
+    Author:
+      type: object
+      additionalProperties: false
+      required: [id, name, role]
+      properties:
+        id: {type: integer, minimum: 1}
+        name: {type: string, minLength: 1, maxLength: 255}
+        role:
+          type: string
+          enum: [reporter, technician, administrator]
+          description: Author role captured when the comment was created.
+    TicketComment:
+      type: object
+      additionalProperties: false
+      required: [id, content, author, created_at]
+      properties:
+        id: {type: integer, minimum: 1}
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Original validated content; clients render it as inert plain text.
+        author: {$ref: '#/components/schemas/Author'}
+        created_at: {type: string, format: date-time}
+    CreateCommentRequest:
+      type: object
+      additionalProperties: false
+      required: [content, submission_token]
+      properties:
+        content: {type: string, minLength: 1, maxLength: 2000}
+        submission_token: {type: string, format: uuid}
+    ErrorMap:
+      oneOf:
+        - type: object
+          additionalProperties:
+            type: array
+            items: {type: string}
+        - type: 'null'
+    CommentListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, errors, code]
+      properties:
+        success: {type: boolean, const: true}
+        message: {type: string}
+        data:
+          type: array
+          description: Stable oldest-first order by creation time and identifier.
+          items: {$ref: '#/components/schemas/TicketComment'}
+        errors: {type: 'null'}
+        code: {type: 'null'}
+    CommentEnvelope:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, errors, code]
+      properties:
+        success: {type: boolean, const: true}
+        message: {type: string}
+        data: {$ref: '#/components/schemas/TicketComment'}
+        errors: {type: 'null'}
+        code: {type: 'null'}
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, errors, code]
+      properties:
+        success: {type: boolean, const: false}
+        message: {type: string}
+        data: {type: 'null'}
+        errors: {$ref: '#/components/schemas/ErrorMap'}
+        code: {type: string, minLength: 1}
+  responses:
+    CommentList:
+      description: Authorized complete chronological comment collection, including empty success
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/CommentListEnvelope'}
+    CommentCreated:
+      description: Exactly one new immutable comment committed atomically
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/CommentEnvelope'}
+    CommentReplay:
+      description: Existing authoritative comment for the same ticket, author, and submission token
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/CommentEnvelope'}
+    Validation:
+      description: VALIDATION_ERROR; no comment created
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code: {const: VALIDATION_ERROR}
+          example:
+            success: false
+            message: The submitted data is invalid.
+            data: null
+            errors:
+              content: [A non-empty comment is required.]
+            code: VALIDATION_ERROR
+    Unauthenticated:
+      description: Missing, invalid, revoked, or inactive authentication; no restricted data
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code: {const: UNAUTHENTICATED}
+          example:
+            success: false
+            message: Authentication required.
+            data: null
+            errors: null
+            code: UNAUTHENTICATED
+    Forbidden:
+      description: Authenticated actor lacks the route role; target is not resolved
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code: {const: FORBIDDEN}
+          example:
+            success: false
+            message: You are not authorized to perform this operation.
+            data: null
+            errors: null
+            code: FORBIDDEN
+    ConcealedTicketNotFound:
+      description: Identical TICKET_NOT_FOUND outcome for unknown and unauthorized reporter/technician targets
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code: {const: TICKET_NOT_FOUND}
+          example:
+            success: false
+            message: Ticket not found.
+            data: null
+            errors: null
+            code: TICKET_NOT_FOUND
+    TicketNotFound:
+      description: TICKET_NOT_FOUND for an absent ticket in administrator oversight
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code: {const: TICKET_NOT_FOUND}
+          example:
+            success: false
+            message: Ticket not found.
+            data: null
+            errors: null
+            code: TICKET_NOT_FOUND
+    ServerError:
+      description: Sanitized failure; transaction creates no partial comment and same token remains safe to retry
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code: {const: SERVER_ERROR}
+          example:
+            success: false
+            message: An unexpected server error occurred.
+            data: null
+            errors: null
+            code: SERVER_ERROR
