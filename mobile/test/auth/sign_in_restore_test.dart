@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:fixflow/auth/models/auth_models.dart';
 import 'package:fixflow/auth/repositories/auth_repository.dart';
 import 'package:fixflow/auth/screens/session_gate.dart';
+import 'package:fixflow/auth/screens/sign_in_screen.dart';
 import 'package:fixflow/auth/state/auth_controller.dart';
+import 'package:fixflow/design_system/theme/fixflow_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -58,6 +60,49 @@ void main() {
     expect(find.text('Offline.'), findsOneWidget);
     expect(find.byKey(const Key('session_retry')), findsOneWidget);
   });
+
+  for (final brightness in Brightness.values) {
+    for (final direction in TextDirection.values) {
+      testWidgets(
+        'sign in is accessible at 200% text in ${brightness.name} ${direction.name}',
+        (tester) async {
+          await tester.binding.setSurfaceSize(const Size(320, 640));
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+          final controller = AuthController(RestoreRepository());
+          await tester.pumpWidget(
+            MediaQuery(
+              data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+              child: MaterialApp(
+                theme: FixFlowTheme.light(),
+                darkTheme: FixFlowTheme.dark(),
+                themeMode: brightness == Brightness.dark
+                    ? ThemeMode.dark
+                    : ThemeMode.light,
+                home: Directionality(
+                  textDirection: direction,
+                  child: SignInScreen(controller: controller),
+                ),
+              ),
+            ),
+          );
+          await tester.enterText(
+            find.byKey(const Key('login_password')),
+            'Password1234',
+          );
+          await tester.scrollUntilVisible(
+            find.byTooltip('Show password'),
+            150,
+            scrollable: find.byType(Scrollable).first,
+          );
+          await tester.tap(find.byTooltip('Show password'));
+          await tester.pump();
+          expect(find.text('Password1234'), findsOneWidget);
+          expect(find.text('FixFlow'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
 }
 
 class RestoreRepository implements AuthRepository {

@@ -4,6 +4,7 @@ import 'package:fixflow/tickets/screens/my_tickets_screen.dart';
 import 'package:fixflow/tickets/state/my_tickets_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fixflow/design_system/theme/fixflow_theme.dart';
 
 void main() {
   test(
@@ -29,6 +30,28 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('You have no tickets yet.'), findsOneWidget);
+  });
+
+  testWidgets('reporter list reflows at 320 pixels and 200% text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+        child: MaterialApp(
+          theme: FixFlowTheme.light(),
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: MyTicketsScreen(repository: ListRepo()),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('ticket_A')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 

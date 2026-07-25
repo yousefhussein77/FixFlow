@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../design_system/components/buttons/fixflow_buttons.dart';
+import '../../design_system/components/feedback/fixflow_state_view.dart';
+import '../../design_system/components/forms/fixflow_fields.dart';
+import '../../design_system/layout/fixflow_page.dart';
 import '../models/reference_models.dart' as model;
 import '../state/reference_controller.dart';
 
@@ -41,23 +45,22 @@ class _CategoryScreenState extends State<CategoryScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
+            FixFlowTextField(
+              label: 'Department ID',
               controller: department,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Department ID'),
             ),
-            TextField(
-              controller: name,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
+            FixFlowTextField(label: 'Name', controller: name),
           ],
         ),
         actions: [
-          TextButton(
+          FixFlowButton(
+            label: 'Cancel',
+            variant: FixFlowButtonVariant.text,
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
           ),
-          FilledButton(
+          FixFlowButton(
+            label: 'Save',
             onPressed: () {
               final departmentId = int.tryParse(department.text);
               if (departmentId == null) return;
@@ -69,50 +72,73 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 version: value?.version,
               );
             },
-            child: const Text('Save'),
           ),
         ],
       ),
     );
+    department.dispose();
+    name.dispose();
   }
+
+  FixFlowStateKind _stateKind(model.ReferenceStatus status) => switch (status) {
+    model.ReferenceStatus.unauthorized => FixFlowStateKind.unauthorized,
+    model.ReferenceStatus.offline => FixFlowStateKind.offline,
+    model.ReferenceStatus.conflict => FixFlowStateKind.conflict,
+    model.ReferenceStatus.validation => FixFlowStateKind.validation,
+    _ => FixFlowStateKind.serverError,
+  };
 
   @override
   Widget build(BuildContext context) {
-    final state = widget.controller.state;
-    Widget body;
-    if (state.status == model.ReferenceStatus.loading) {
-      body = const Center(child: CircularProgressIndicator());
-    } else if (state.status == model.ReferenceStatus.empty) {
-      body = const Center(child: Text('No categories yet.'));
-    } else if (state.message != null) {
-      body = Center(child: Text(state.message!));
-    } else {
-      body = ListView(
-        children: widget.controller.categories
-            .map(
-              (category) => ListTile(
-                onTap: () => _edit(category),
-                title: Text(category.name),
-                subtitle: Text(
-                  '${category.departmentName} • ${category.isActive ? 'Active' : 'Inactive'}',
-                ),
-                trailing: Switch(
-                  value: category.isActive,
-                  onChanged: (_) => widget.controller.toggleCategory(category),
+    final s = widget.controller.state;
+    return FixFlowPage(
+      title: const Text('Categories'),
+      floatingActionButton: FixFlowFloatingButton(
+        key: const Key('category_add'),
+        icon: Icons.add,
+        label: 'Add category',
+        onPressed: () => _edit(),
+      ),
+      body: switch (s.status) {
+        model.ReferenceStatus.loading => const FixFlowStateView(
+          kind: FixFlowStateKind.loading,
+          title: 'Loading categories',
+        ),
+        model.ReferenceStatus.empty => const FixFlowStateView(
+          kind: FixFlowStateKind.empty,
+          title: 'No categories yet.',
+        ),
+        model.ReferenceStatus.unauthorized ||
+        model.ReferenceStatus.offline ||
+        model.ReferenceStatus.conflict ||
+        model.ReferenceStatus.validation ||
+        model.ReferenceStatus.serverError => FixFlowStateView(
+          kind: _stateKind(s.status),
+          title: 'Unable to load categories',
+          message: s.message,
+          actionLabel: 'Retry',
+          onAction: widget.controller.loadCategories,
+        ),
+        _ => Column(
+          children: [
+            for (final category in widget.controller.categories)
+              Card(
+                child: ListTile(
+                  onTap: () => _edit(category),
+                  title: Text(category.name),
+                  subtitle: Text(
+                    '${category.departmentName} • ${category.isActive ? 'Active' : 'Inactive'}',
+                  ),
+                  trailing: Switch(
+                    value: category.isActive,
+                    onChanged: (_) =>
+                        widget.controller.toggleCategory(category),
+                  ),
                 ),
               ),
-            )
-            .toList(),
-      );
-    }
-    return Scaffold(
-      appBar: AppBar(title: const Text('Categories')),
-      floatingActionButton: FloatingActionButton(
-        key: const Key('category_add'),
-        onPressed: () => _edit(),
-        child: const Icon(Icons.add),
-      ),
-      body: body,
+          ],
+        ),
+      },
     );
   }
 }

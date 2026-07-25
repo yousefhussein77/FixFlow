@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+
+import '../../design_system/components/buttons/fixflow_buttons.dart';
+import '../../design_system/components/feedback/fixflow_state_view.dart';
+import '../../design_system/components/forms/fixflow_fields.dart';
+import '../../design_system/layout/fixflow_page.dart';
 import '../models/reference_models.dart';
 import '../state/reference_controller.dart';
 
 class DepartmentScreen extends StatefulWidget {
   const DepartmentScreen({required this.controller, super.key});
   final ReferenceController controller;
+
   @override
   State<DepartmentScreen> createState() => _DepartmentScreenState();
 }
@@ -27,82 +33,100 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     super.dispose();
   }
 
-  Future<void> _edit([Department? d]) async {
-    final c = TextEditingController(text: d?.name);
-    await showDialog(
+  Future<void> _edit([Department? department]) async {
+    final name = TextEditingController(text: department?.name);
+    await showDialog<void>(
       context: context,
-      builder: (x) => AlertDialog(
-        title: Text(d == null ? 'Create department' : 'Edit department'),
-        content: TextField(
-          key: const Key('department_name'),
-          controller: c,
-          decoration: InputDecoration(
-            errorText: widget.controller.state.errors['name']?.firstOrNull,
-          ),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          department == null ? 'Create department' : 'Edit department',
+        ),
+        content: FixFlowTextField(
+          fieldKey: const Key('department_name'),
+          label: 'Name',
+          controller: name,
+          error: widget.controller.state.errors['name']?.firstOrNull,
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(x),
-            child: const Text('Cancel'),
+          FixFlowButton(
+            label: 'Cancel',
+            variant: FixFlowButtonVariant.text,
+            onPressed: () => Navigator.pop(dialogContext),
           ),
-          FilledButton(
+          FixFlowButton(
+            label: 'Save',
             onPressed: () {
-              Navigator.pop(x);
+              Navigator.pop(dialogContext);
               widget.controller.saveDepartment(
-                id: d?.id,
-                name: c.text,
-                version: d?.version,
+                id: department?.id,
+                name: name.text,
+                version: department?.version,
               );
             },
-            child: const Text('Save'),
           ),
         ],
       ),
     );
+    name.dispose();
   }
+
+  FixFlowStateKind _stateKind(ReferenceStatus status) => switch (status) {
+    ReferenceStatus.unauthorized => FixFlowStateKind.unauthorized,
+    ReferenceStatus.offline => FixFlowStateKind.offline,
+    ReferenceStatus.conflict => FixFlowStateKind.conflict,
+    ReferenceStatus.validation => FixFlowStateKind.validation,
+    _ => FixFlowStateKind.serverError,
+  };
 
   @override
   Widget build(BuildContext context) {
     final s = widget.controller.state;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Departments')),
-      floatingActionButton: FloatingActionButton(
+    return FixFlowPage(
+      title: const Text('Departments'),
+      floatingActionButton: FixFlowFloatingButton(
         key: const Key('department_add'),
+        icon: Icons.add,
+        label: 'Add department',
         onPressed: () => _edit(),
-        child: const Icon(Icons.add),
       ),
-      body: s.status == ReferenceStatus.loading
-          ? const Center(child: CircularProgressIndicator())
-          : s.status == ReferenceStatus.empty
-          ? const Center(child: Text('No departments yet.'))
-          : s.message != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(s.message!),
-                  FilledButton(
-                    onPressed: widget.controller.loadDepartments,
-                    child: const Text('Retry'),
+      body: switch (s.status) {
+        ReferenceStatus.loading => const FixFlowStateView(
+          kind: FixFlowStateKind.loading,
+          title: 'Loading departments',
+        ),
+        ReferenceStatus.empty => const FixFlowStateView(
+          kind: FixFlowStateKind.empty,
+          title: 'No departments yet.',
+        ),
+        ReferenceStatus.unauthorized ||
+        ReferenceStatus.offline ||
+        ReferenceStatus.conflict ||
+        ReferenceStatus.validation ||
+        ReferenceStatus.serverError => FixFlowStateView(
+          kind: _stateKind(s.status),
+          title: 'Unable to load departments',
+          message: s.message,
+          actionLabel: 'Retry',
+          onAction: widget.controller.loadDepartments,
+        ),
+        _ => Column(
+          children: [
+            for (final department in widget.controller.departments)
+              Card(
+                child: ListTile(
+                  title: Text(department.name),
+                  subtitle: Text(department.isActive ? 'Active' : 'Inactive'),
+                  onTap: () => _edit(department),
+                  trailing: Switch(
+                    value: department.isActive,
+                    onChanged: (_) =>
+                        widget.controller.toggleDepartment(department),
                   ),
-                ],
+                ),
               ),
-            )
-          : ListView(
-              children: widget.controller.departments
-                  .map(
-                    (d) => ListTile(
-                      title: Text(d.name),
-                      subtitle: Text(d.isActive ? 'Active' : 'Inactive'),
-                      onTap: () => _edit(d),
-                      trailing: Switch(
-                        value: d.isActive,
-                        onChanged: (_) => widget.controller.toggleDepartment(d),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
+          ],
+        ),
+      },
     );
   }
 }

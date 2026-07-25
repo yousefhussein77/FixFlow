@@ -3,6 +3,9 @@ import 'package:fixflow/reference_data/models/reference_models.dart';
 import 'package:fixflow/reference_data/repositories/reference_repository.dart';
 import 'package:fixflow/reference_data/state/reference_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
+import 'package:fixflow/reference_data/screens/department_screen.dart';
+import 'package:fixflow/design_system/theme/fixflow_theme.dart';
 
 void main() {
   test('department loading represents populated and empty success', () async {
@@ -19,6 +22,30 @@ void main() {
     final c = ReferenceController(FakeReferences(conflict: true));
     await c.saveDepartment(name: 'X');
     expect(c.state.status, ReferenceStatus.conflict);
+  });
+
+  testWidgets('department management reflows at 320 pixels and 200% text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+        child: MaterialApp(
+          theme: FixFlowTheme.light(),
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: DepartmentScreen(
+              controller: ReferenceController(FakeReferences()),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Facilities'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 

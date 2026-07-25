@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/reference_models.dart';
 import '../state/reference_controller.dart';
+import '../../design_system/components/feedback/fixflow_state_view.dart';
 
 class ReferenceOptionLoader extends StatefulWidget {
   const ReferenceOptionLoader({
@@ -44,14 +45,25 @@ class _LoaderState extends State<ReferenceOptionLoader> {
   Widget build(BuildContext context) {
     final s = widget.controller.state;
     if (s.status == ReferenceStatus.loading)
-      return const CircularProgressIndicator();
+      return const FixFlowStateView(
+        kind: FixFlowStateKind.loading,
+        title: 'Loading options',
+      );
     if (s.status == ReferenceStatus.empty)
-      return const Text('No active options available.');
+      return const FixFlowStateView(
+        kind: FixFlowStateKind.empty,
+        title: 'No active options available.',
+      );
     if (s.message != null)
       return Column(
         children: [
-          Text(s.message!),
-          TextButton(onPressed: _load, child: const Text('Retry')),
+          FixFlowStateView(
+            kind: FixFlowStateKind.serverError,
+            title: 'Unable to load options',
+            message: s.message,
+            actionLabel: 'Retry',
+            onAction: _load,
+          ),
         ],
       );
     return widget.builder(widget.controller.options);

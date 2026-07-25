@@ -4,6 +4,7 @@ import 'package:fixflow/auth/models/auth_models.dart';
 import 'package:fixflow/auth/repositories/auth_repository.dart';
 import 'package:fixflow/auth/screens/register_screen.dart';
 import 'package:fixflow/auth/state/auth_controller.dart';
+import 'package:fixflow/design_system/theme/fixflow_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -83,6 +84,34 @@ void main() {
       expect(button.onPressed, isNull);
     },
   );
+
+  testWidgets('registration remains scrollable with RTL and large text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final controller = AuthController(FakeAuthRepository());
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+        child: MaterialApp(
+          theme: FixFlowTheme.light(),
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: RegisterScreen(controller: controller),
+          ),
+        ),
+      ),
+    );
+    expect(find.byKey(const Key('register_name')), findsOneWidget);
+    expect(find.byTooltip('Show password'), findsNWidgets(2));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('register_submit')).first,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class FakeAuthRepository implements AuthRepository {

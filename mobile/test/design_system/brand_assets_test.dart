@@ -1,0 +1,24 @@
+import 'dart:io';
+
+import 'package:fixflow/design_system/brand/fixflow_brand.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('approved brand inventory exists with stable naming', () {
+    expect(
+      File('assets/brand/source/fixflow_logo_master.svg').existsSync(),
+      isTrue,
+    );
+    expect(FixFlowBrand.runtimeAssets, hasLength(7));
+    for (final path in FixFlowBrand.runtimeAssets) {
+      expect(path, startsWith('assets/brand/runtime/fixflow_'));
+      expect(File(path).existsSync(), isTrue, reason: path);
+      expect(File(path).readAsStringSync(), contains('viewBox'), reason: path);
+    }
+    expect(FixFlowBrand.minimumIconSize, 24);
+    expect(FixFlowBrand.minimumHorizontalWidth, 120);
+    final guidance = File('assets/brand/README.md').readAsStringSync();
+    expect(guidance.toLowerCase(), contains('clear space'));
+    expect(guidance.toLowerCase(), contains('prohibited'));
+  });
+}

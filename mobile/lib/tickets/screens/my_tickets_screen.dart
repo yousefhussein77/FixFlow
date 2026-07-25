@@ -1,17 +1,33 @@
 import 'package:flutter/material.dart';
+
+import '../../design_system/components/feedback/fixflow_state_view.dart';
+import '../../design_system/components/tickets/fixflow_ticket_list_item.dart';
+import '../../design_system/layout/fixflow_page.dart';
+import '../../design_system/tokens/fixflow_spacing.dart';
+import '../repositories/ticket_comment_repository.dart';
+import '../repositories/ticket_rating_repository.dart';
 import '../repositories/ticket_repository.dart';
 import '../state/my_tickets_controller.dart';
 import 'ticket_details_screen.dart';
 
 class MyTicketsScreen extends StatefulWidget {
-  const MyTicketsScreen({required this.repository, super.key});
+  const MyTicketsScreen({
+    required this.repository,
+    this.commentRepository,
+    this.ratingRepository,
+    super.key,
+  });
   final TicketRepository repository;
+  final TicketCommentRepository? commentRepository;
+  final TicketRatingRepository? ratingRepository;
+
   @override
   State<MyTicketsScreen> createState() => _MyTicketsScreenState();
 }
 
 class _MyTicketsScreenState extends State<MyTicketsScreen> {
   late final MyTicketsController controller;
+
   @override
   void initState() {
     super.initState();
@@ -30,73 +46,89 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
     super.dispose();
   }
 
+  FixFlowStateKind _stateKind(MyTicketsStatus status) => switch (status) {
+    MyTicketsStatus.offline => FixFlowStateKind.offline,
+    MyTicketsStatus.unauthorized => FixFlowStateKind.unauthorized,
+    MyTicketsStatus.serverError => FixFlowStateKind.serverError,
+    _ => FixFlowStateKind.serverError,
+  };
+
   @override
   Widget build(BuildContext context) {
     final s = controller.state;
-    return Scaffold(
-      appBar: AppBar(title: const Text('My tickets')),
-      body: SafeArea(
-        child: switch (s.status) {
-          MyTicketsStatus.loading => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          MyTicketsStatus.empty => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('You have no tickets yet.'),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Create a ticket'),
-                ),
-              ],
+    return FixFlowPage(
+      title: const Text('My tickets'),
+      body: switch (s.status) {
+        MyTicketsStatus.loading => const FixFlowStateView(
+          kind: FixFlowStateKind.loading,
+          title: 'Loading tickets',
+        ),
+        MyTicketsStatus.empty => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const FixFlowStateView(
+              kind: FixFlowStateKind.empty,
+              title: 'You have no tickets yet.',
             ),
-          ),
-          MyTicketsStatus.offline ||
-          MyTicketsStatus.serverError ||
-          MyTicketsStatus.unauthorized => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(s.message ?? 'Unable to load tickets.'),
-                FilledButton(
-                  key: const Key('tickets_retry'),
-                  onPressed: controller.load,
-                  child: const Text('Retry'),
-                ),
-              ],
+            const SizedBox(height: FixFlowSpacing.sm),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Create a ticket'),
             ),
-          ),
-          _ => ListView(
-            children: [
-              for (final ticket in controller.tickets)
-                ListTile(
+          ],
+        ),
+        MyTicketsStatus.offline ||
+        MyTicketsStatus.serverError ||
+        MyTicketsStatus.unauthorized => FixFlowStateView(
+          kind: _stateKind(s.status),
+          title: s.status == MyTicketsStatus.unauthorized
+              ? 'Tickets are unavailable'
+              : 'Unable to load tickets.',
+          message: s.message,
+          actionLabel: 'Retry',
+          actionKey: const Key('tickets_retry'),
+          onAction: controller.load,
+        ),
+        _ => Column(
+          children: [
+            for (final ticket in controller.tickets)
+              Padding(
+                padding: const EdgeInsets.only(bottom: FixFlowSpacing.sm),
+                child: FixFlowTicketListItem(
                   key: Key('ticket_${ticket.reference}'),
-                  title: Text(ticket.title),
-                  subtitle: Text(
-                    '${ticket.reference} · ${ticket.status} · ${ticket.priority}',
-                  ),
+                  reference: ticket.reference,
+                  title: ticket.title,
+                  status: ticket.status,
+                  priority: ticket.priority,
+                  metadata:
+                      '${ticket.department.name} · ${ticket.category.name}',
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => TicketDetailsScreen(
                         repository: widget.repository,
                         reference: ticket.reference,
+                        commentRepository: widget.commentRepository,
+                        ratingRepository: widget.ratingRepository,
                       ),
                     ),
                   ),
                 ),
-              if (s.status == MyTicketsStatus.loadingMore)
-                const Center(child: CircularProgressIndicator()),
+              ),
+            if (s.status == MyTicketsStatus.loadingMore)
+              const FixFlowStateView(
+                kind: FixFlowStateKind.loading,
+                title: 'Loading more tickets',
+              ),
+            if (controller.state.status != MyTicketsStatus.loadingMore)
               TextButton(
                 key: const Key('tickets_more'),
                 onPressed: () => controller.load(refresh: false),
                 child: const Text('Load more'),
               ),
-            ],
-          ),
-        },
-      ),
+          ],
+        ),
+      },
     );
   }
 }

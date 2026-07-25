@@ -4,6 +4,7 @@ import 'package:fixflow/tickets/screens/ticket_details_screen.dart';
 import 'package:fixflow/tickets/state/ticket_details_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fixflow/design_system/theme/fixflow_theme.dart';
 
 void main() {
   test(
@@ -40,6 +41,31 @@ void main() {
     expect(find.text('Leak'), findsOneWidget);
     expect(find.text('Location: Floor 2'), findsOneWidget);
     expect(find.text('Photos: 0'), findsOneWidget);
+  });
+
+  testWidgets('reporter detail reflows at 320 pixels and 200% text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+        child: MaterialApp(
+          theme: FixFlowTheme.dark(),
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: TicketDetailsScreen(
+              repository: DetailRepo(),
+              reference: 'TKT-ABCDEFGHIJKL',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Leak'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 

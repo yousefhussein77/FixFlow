@@ -2,6 +2,9 @@ import 'package:fixflow/auth/models/auth_models.dart';
 import 'package:fixflow/auth/repositories/auth_repository.dart';
 import 'package:fixflow/auth/screens/profile_screen.dart';
 import 'package:fixflow/auth/state/auth_controller.dart';
+import 'package:fixflow/design_system/theme/fixflow_theme.dart';
+import 'package:fixflow/tickets/models/ticket_models.dart';
+import 'package:fixflow/tickets/repositories/ticket_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -26,6 +29,57 @@ void main() {
     expect(find.textContaining('token'), findsNothing);
     expect(find.textContaining('password'), findsNothing);
   });
+
+  testWidgets(
+    'reporter profile exposes only reporter destinations and logout',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final controller = AuthController(ProfileRepository(allowProfile: true));
+      await controller.restore();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: FixFlowTheme.light(),
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+            child: ProfileScreen(
+              controller: controller,
+              ticketRepository: _TicketRepository(),
+            ),
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('create_ticket')), findsOneWidget);
+      expect(find.byKey(const Key('my_tickets')), findsOneWidget);
+      expect(find.byKey(const Key('admin_tickets')), findsNothing);
+      expect(find.byKey(const Key('assigned_tickets')), findsNothing);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('logout_submit')),
+        200,
+      );
+      expect(
+        tester.getSemantics(find.byKey(const Key('logout_submit'))).label,
+        contains('Sign out'),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+}
+
+class _TicketRepository implements TicketRepository {
+  @override
+  Future<List<TicketOption>> departments() => throw UnimplementedError();
+  @override
+  Future<List<TicketOption>> categories(int departmentId) =>
+      throw UnimplementedError();
+  @override
+  Future<TicketDetail> create(CreateTicketInput input) =>
+      throw UnimplementedError();
+  @override
+  Future<TicketPage> list({int page = 1, int perPage = 20}) =>
+      throw UnimplementedError();
+  @override
+  Future<TicketDetail> detail(String reference) => throw UnimplementedError();
 }
 
 class ProfileRepository implements AuthRepository {

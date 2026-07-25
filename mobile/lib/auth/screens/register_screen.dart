@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../design_system/components/buttons/fixflow_buttons.dart';
+import '../../design_system/components/forms/fixflow_fields.dart';
+import '../../design_system/layout/fixflow_auth_page.dart';
+import '../../design_system/tokens/fixflow_spacing.dart';
 import '../state/auth_controller.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -46,80 +50,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final state = widget.controller.state;
     final loading = state.status == AuthViewStatus.loading;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Create reporter account')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            TextField(
-              key: const Key('register_name'),
-              controller: _name,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                errorText: state.fieldErrors['name']?.firstOrNull,
-              ),
-            ),
-            TextField(
-              key: const Key('register_email'),
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                errorText: state.fieldErrors['email']?.firstOrNull,
-              ),
-            ),
-            TextField(
-              key: const Key('register_password'),
-              controller: _password,
-              obscureText: true,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                helperText: '12–128 characters with a letter and number',
-                errorText: state.fieldErrors['password']?.firstOrNull,
-              ),
-            ),
-            TextField(
-              key: const Key('register_confirmation'),
-              controller: _confirmation,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Confirm password'),
-            ),
-            if (state.message != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                state.message!,
-                key: const Key('register_error'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ],
-            const SizedBox(height: 24),
-            FilledButton(
-              key: const Key('register_submit'),
-              onPressed: loading
-                  ? null
-                  : () => widget.controller.register(
-                      name: _name.text,
-                      email: _email.text,
-                      password: _password.text,
-                      passwordConfirmation: _confirmation.text,
-                    ),
-              child: loading
-                  ? const SizedBox.square(
-                      dimension: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create account'),
-            ),
-            TextButton(
-              onPressed: loading ? null : widget.onShowSignIn,
-              child: const Text('Already have an account? Sign in'),
+    return FixFlowAuthPage(
+      title: 'Create reporter account',
+      subtitle: 'Report and follow maintenance requests in one place.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FixFlowTextField(
+            fieldKey: const Key('register_name'),
+            label: 'Name',
+            controller: _name,
+            error: state.fieldErrors['name']?.firstOrNull,
+          ),
+          const SizedBox(height: FixFlowSpacing.sm),
+          FixFlowTextField(
+            fieldKey: const Key('register_email'),
+            label: 'Email',
+            controller: _email,
+            keyboardType: TextInputType.emailAddress,
+            error: state.fieldErrors['email']?.firstOrNull,
+          ),
+          const SizedBox(height: FixFlowSpacing.sm),
+          FixFlowTextField(
+            fieldKey: const Key('register_password'),
+            label: 'Password',
+            controller: _password,
+            obscureText: true,
+            helper: '12–128 characters with a letter and number',
+            error: state.fieldErrors['password']?.firstOrNull,
+          ),
+          const SizedBox(height: FixFlowSpacing.sm),
+          FixFlowTextField(
+            fieldKey: const Key('register_confirmation'),
+            label: 'Confirm password',
+            controller: _confirmation,
+            obscureText: true,
+          ),
+          if (state.message != null) ...[
+            const SizedBox(height: FixFlowSpacing.sm),
+            Text(
+              state.message!,
+              key: const Key('register_error'),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ],
-        ),
+          const SizedBox(height: FixFlowSpacing.md),
+          FixFlowButton(
+            buttonKey: const Key('register_submit'),
+            label: 'Create account',
+            loading: loading,
+            onPressed: loading
+                ? null
+                : () => widget.controller.register(
+                    name: _name.text,
+                    email: _email.text,
+                    password: _password.text,
+                    passwordConfirmation: _confirmation.text,
+                  ),
+          ),
+          FixFlowButton(
+            label: 'Already have an account? Sign in',
+            variant: FixFlowButtonVariant.text,
+            onPressed: loading ? null : widget.onShowSignIn,
+          ),
+        ],
       ),
     );
   }
