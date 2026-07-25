@@ -19,6 +19,7 @@ class TicketResource extends TicketSummaryResource
                 'position' => $photo->position,
             ])->values()->all(),
             'updated_at' => $this->updated_at?->toISOString(),
+            'rating' => $this->rating ? (new TicketRatingResource($this->rating))->resolve($request) : null,
         ];
     }
 }
