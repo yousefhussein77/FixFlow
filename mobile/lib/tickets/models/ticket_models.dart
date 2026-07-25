@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'ticket_rating_models.dart';
 
 enum TicketFailureKind {
   validation,
@@ -11,10 +12,16 @@ enum TicketFailureKind {
 }
 
 class TicketFailure implements Exception {
-  const TicketFailure(this.kind, this.message, {this.fieldErrors = const {}});
+  const TicketFailure(
+    this.kind,
+    this.message, {
+    this.fieldErrors = const {},
+    this.code,
+  });
   final TicketFailureKind kind;
   final String message;
   final Map<String, List<String>> fieldErrors;
+  final String? code;
 }
 
 class TicketOption {
@@ -130,11 +137,13 @@ class TicketDetail extends TicketSummary {
     required this.location,
     required this.photos,
     required this.updatedAt,
+    this.rating,
   });
   final String description;
   final String location;
   final List<TicketPhoto> photos;
   final DateTime updatedAt;
+  final TicketRating? rating;
   factory TicketDetail.fromJson(Map<String, dynamic> json) {
     final s = TicketSummary.fromJson(json);
     return TicketDetail(
@@ -152,6 +161,9 @@ class TicketDetail extends TicketSummary {
           .map(TicketPhoto.fromJson)
           .toList(),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      rating: json['rating'] == null
+          ? null
+          : TicketRating.fromJson(json['rating'] as Map<String, dynamic>),
     );
   }
 }

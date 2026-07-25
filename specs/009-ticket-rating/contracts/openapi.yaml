@@ -1,0 +1,324 @@
+openapi: 3.1.0
+info:
+  title: FixFlow Ticket Rating API
+  version: 1.0.0
+  description: >-
+    Additive reporter-only contract for creating one immutable rating on an
+    owned completed ticket and viewing it through authorized reporter detail.
+servers:
+  - url: /api
+security:
+  - sanctumBearer: []
+tags:
+  - name: Reporter Ticket Rating
+paths:
+  /reporter/tickets/{reference}/rating:
+    post:
+      tags: [Reporter Ticket Rating]
+      operationId: createReporterTicketRating
+      summary: Rate one owned completed ticket
+      description: >-
+        Requires an authenticated active reporter. Ownership is resolved before
+        eligibility. The same accepted submission token replays safely; a
+        distinct later attempt conflicts and cannot change the original rating.
+      parameters:
+        - $ref: '#/components/parameters/TicketReference'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTicketRatingRequest'
+      responses:
+        '201':
+          description: A new rating was created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TicketRating'
+              examples:
+                created:
+                  value:
+                    success: true
+                    message: Ticket rated.
+                    data:
+                      value: 5
+                      rated_at: '2026-07-25T10:30:00Z'
+                    errors: null
+                    code: null
+        '200':
+          description: The same accepted logical submission was replayed.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TicketRating'
+              examples:
+                replay:
+                  value:
+                    success: true
+                    message: Rating already recorded.
+                    data:
+                      value: 5
+                      rated_at: '2026-07-25T10:30:00Z'
+                    errors: null
+                    code: null
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/WrongRole'
+        '404':
+          $ref: '#/components/responses/ConcealedTicketNotFound'
+        '409':
+          description: Ticket is not completed or already has a distinct rating.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                notCompleted:
+                  value:
+                    success: false
+                    message: Only completed tickets can be rated.
+                    data: null
+                    errors: null
+                    code: TICKET_NOT_COMPLETED
+                alreadyRated:
+                  value:
+                    success: false
+                    message: This ticket has already been rated.
+                    data: null
+                    errors: null
+                    code: RATING_ALREADY_EXISTS
+        '422':
+          $ref: '#/components/responses/ValidationFailure'
+        '500':
+          $ref: '#/components/responses/ServerFailure'
+
+  /reporter/tickets/{reference}:
+    get:
+      tags: [Reporter Ticket Rating]
+      operationId: showReporterTicketWithRating
+      summary: Existing owned reporter ticket detail with additive rating
+      description: >-
+        Existing reporter ownership and response fields remain unchanged. The
+        nullable rating property is additive and does not broaden detail access.
+      parameters:
+        - $ref: '#/components/parameters/TicketReference'
+      responses:
+        '200':
+          description: Authorized ticket detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReporterTicketDetailWithRating'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/WrongRole'
+        '404':
+          $ref: '#/components/responses/ConcealedTicketNotFound'
+        '500':
+          $ref: '#/components/responses/ServerFailure'
+
+components:
+  securitySchemes:
+    sanctumBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum token
+
+  parameters:
+    TicketReference:
+      name: reference
+      in: path
+      required: true
+      description: Existing human-readable ticket reference.
+      schema:
+        type: string
+        minLength: 1
+
+  schemas:
+    CreateTicketRatingRequest:
+      type: object
+      additionalProperties: false
+      required: [rating, submission_token]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Native whole-number service rating.
+        submission_token:
+          type: string
+          format: uuid
+          description: Client-generated retry identity retained for ambiguous replay.
+
+    TicketRating:
+      type: object
+      additionalProperties: false
+      required: [value, rated_at]
+      properties:
+        value:
+          type: integer
+          minimum: 1
+          maximum: 5
+        rated_at:
+          type: string
+          format: date-time
+
+    ReporterTicketDetailWithRating:
+      description: Existing reporter ticket detail plus the additive rating property.
+      type: object
+      required:
+        - reference
+        - title
+        - description
+        - status
+        - priority
+        - department
+        - category
+        - location
+        - photos
+        - created_at
+        - updated_at
+        - rating
+      properties:
+        reference: { type: string }
+        title: { type: string }
+        description: { type: string }
+        status:
+          type: string
+          enum: [new, assigned, in_progress, completed, rejected]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        department:
+          $ref: '#/components/schemas/NamedReference'
+        category:
+          $ref: '#/components/schemas/NamedReference'
+        location: { type: string }
+        photos:
+          type: array
+          items: { type: object }
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        rating:
+          oneOf:
+            - $ref: '#/components/schemas/TicketRating'
+            - type: 'null'
+
+    NamedReference:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+
+    SuccessEnvelope:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, errors, code]
+      properties:
+        success:
+          type: boolean
+          const: true
+        message: { type: string }
+        data: {}
+        errors: { type: 'null' }
+        code: { type: 'null' }
+
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, errors, code]
+      properties:
+        success:
+          type: boolean
+          const: false
+        message: { type: string }
+        data: { type: 'null' }
+        errors:
+          oneOf:
+            - type: 'null'
+            - type: object
+              additionalProperties:
+                type: array
+                items: { type: string }
+        code: { type: string, minLength: 1 }
+
+  responses:
+    Unauthenticated:
+      description: Missing, invalid, revoked, expired, or inactive authentication.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example:
+            success: false
+            message: Unauthenticated.
+            data: null
+            errors: null
+            code: UNAUTHENTICATED
+    WrongRole:
+      description: Authenticated actor is not an active reporter; target is not resolved.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example:
+            success: false
+            message: Access denied.
+            data: null
+            errors: null
+            code: FORBIDDEN
+    ConcealedTicketNotFound:
+      description: Unknown and non-owned reporter targets are materially identical.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example:
+            success: false
+            message: Ticket not found.
+            data: null
+            errors: null
+            code: TICKET_NOT_FOUND
+    ValidationFailure:
+      description: Invalid request shape, rating, token, type, or unsupported field.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example:
+            success: false
+            message: The submitted data is invalid.
+            data: null
+            errors:
+              rating: [The rating must be an integer between 1 and 5.]
+            code: VALIDATION_ERROR
+    ServerFailure:
+      description: Sanitized unexpected failure with no partial change.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example:
+            success: false
+            message: An unexpected server error occurred.
+            data: null
+            errors: null
+            code: SERVER_ERROR
