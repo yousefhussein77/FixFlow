@@ -1,0 +1,15 @@
+<?php
+
+namespace App\Actions\Tickets;
+
+use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
+
+class ListActiveTechnicians
+{
+    public function execute(): Collection
+    {
+        return User::query()->where('role', User::ROLE_TECHNICIAN)->where('is_active', true)
+            ->orderByRaw('LOWER(name)')->orderBy('id')->get(['id', 'name']);
+    }
+}

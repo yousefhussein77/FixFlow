@@ -16,6 +16,6 @@ class EnsureUserIsAdministrator
             return ApiResponse::error('You are not authorized to perform this operation.', 'FORBIDDEN', 403);
         }
 
-return $next($request);
+        return $next($request);
     }
 }

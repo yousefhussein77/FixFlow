@@ -1,0 +1,402 @@
+openapi: 3.1.0
+info:
+  title: FixFlow Administrator Ticket Assignment API
+  version: 1.0.0
+  description: >-
+    Additive Version 1 contract for administrator ticket oversight, active-technician discovery,
+    and one-time assignment of a new ticket. Reassignment, unassignment, processing, discussions,
+    ratings, deletion, and other status transitions are not exposed.
+servers:
+  - url: /api
+security:
+  - sanctumBearer: []
+paths:
+  /admin/tickets:
+    get:
+      operationId: listAdministratorTickets
+      summary: List all tickets within the administrator's Version 1 oversight
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminTicketList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Validation'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /admin/options/technicians:
+    get:
+      operationId: listActiveTechnicianOptions
+      summary: List minimal active-technician choices
+      responses:
+        '200':
+          $ref: '#/components/responses/TechnicianOptionList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /admin/tickets/{reference}/assignment:
+    patch:
+      operationId: assignAdministratorTicket
+      summary: Assign a new unassigned ticket once
+      parameters:
+        - $ref: '#/components/parameters/TicketReference'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AssignmentSuccess'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/TicketNotFound'
+        '409':
+          $ref: '#/components/responses/AssignmentConflict'
+        '422':
+          $ref: '#/components/responses/Validation'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  securitySchemes:
+    sanctumBearer:
+      type: http
+      scheme: bearer
+  parameters:
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    TicketReference:
+      name: reference
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^TKT-[A-Z0-9]{12}$'
+  schemas:
+    NamedReference:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+    UserSummary:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+    TechnicianOption:
+      $ref: '#/components/schemas/UserSummary'
+    AdminTicketSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - reference
+        - title
+        - reporter
+        - priority
+        - department
+        - category
+        - status
+        - assigned_technician
+        - created_at
+      properties:
+        reference:
+          type: string
+          pattern: '^TKT-[A-Z0-9]{12}$'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        reporter:
+          $ref: '#/components/schemas/UserSummary'
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        department:
+          $ref: '#/components/schemas/NamedReference'
+        category:
+          $ref: '#/components/schemas/NamedReference'
+        status:
+          type: string
+          enum: [new, assigned]
+        assigned_technician:
+          oneOf:
+            - $ref: '#/components/schemas/UserSummary'
+            - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+    AssignmentRequest:
+      type: object
+      additionalProperties: false
+      required: [technician_id]
+      properties:
+        technician_id:
+          type: integer
+          minimum: 1
+          description: >-
+            Identifier selected from active-technician options. The server revalidates existence,
+            active state, and technician role when the assignment commits.
+    PaginationMeta:
+      type: object
+      additionalProperties: false
+      required: [current_page, per_page, total, last_page]
+      properties:
+        current_page:
+          type: integer
+          minimum: 1
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+        last_page:
+          type: integer
+          minimum: 1
+    ErrorMap:
+      oneOf:
+        - type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        - type: 'null'
+    AdminTicketListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, errors, code, meta]
+      properties:
+        success:
+          type: boolean
+          const: true
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminTicketSummary'
+        errors:
+          type: 'null'
+        code:
+          type: 'null'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    TechnicianOptionListEnvelope:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, errors, code]
+      properties:
+        success:
+          type: boolean
+          const: true
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TechnicianOption'
+        errors:
+          type: 'null'
+        code:
+          type: 'null'
+    AssignmentSuccessEnvelope:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, errors, code]
+      properties:
+        success:
+          type: boolean
+          const: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AdminTicketSummary'
+        errors:
+          type: 'null'
+        code:
+          type: 'null'
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, errors, code]
+      properties:
+        success:
+          type: boolean
+          const: false
+        message:
+          type: string
+        data:
+          type: 'null'
+        errors:
+          $ref: '#/components/schemas/ErrorMap'
+        code:
+          type: string
+          minLength: 1
+  responses:
+    AdminTicketList:
+      description: Stable newest-first administrator ticket page, including an empty page
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminTicketListEnvelope'
+    TechnicianOptionList:
+      description: Name/id choices for currently active technicians, including an empty collection
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TechnicianOptionListEnvelope'
+    AssignmentSuccess:
+      description: Authoritative ticket after technician, status, and history commit atomically
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AssignmentSuccessEnvelope'
+    Validation:
+      description: >-
+        VALIDATION_ERROR. For assignment, errors.technician_id explains malformed, unknown,
+        inactive, or non-technician input without exposing unrelated user data.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code:
+                    const: VALIDATION_ERROR
+          examples:
+            ineligibleTechnician:
+              value:
+                success: false
+                message: The submitted data is invalid.
+                data: null
+                errors:
+                  technician_id: [The selected technician is not eligible for assignment.]
+                code: VALIDATION_ERROR
+    Unauthenticated:
+      description: Missing, invalid, revoked, or inactive-account authentication; no restricted data
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code:
+                    const: UNAUTHENTICATED
+          example:
+            success: false
+            message: Authentication required.
+            data: null
+            errors: null
+            code: UNAUTHENTICATED
+    Forbidden:
+      description: Authenticated user lacks administrator authority; no ticket/options data or counts
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code:
+                    const: FORBIDDEN
+          example:
+            success: false
+            message: You are not authorized to perform this action.
+            data: null
+            errors: null
+            code: FORBIDDEN
+    TicketNotFound:
+      description: >-
+        TICKET_NOT_FOUND; identical public outcome for an unknown ticket and a ticket outside the
+        authorized administrator's oversight. No ticket data is included.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code:
+                    const: TICKET_NOT_FOUND
+          example:
+            success: false
+            message: Ticket not found.
+            data: null
+            errors: null
+            code: TICKET_NOT_FOUND
+    AssignmentConflict:
+      description: Ticket is no longer new/unassigned or a competing assignment won; refresh required
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code:
+                    const: ASSIGNMENT_CONFLICT
+          example:
+            success: false
+            message: The ticket can no longer be assigned. Refresh and review its current state.
+            data: null
+            errors: null
+            code: ASSIGNMENT_CONFLICT
+    ServerError:
+      description: Sanitized unexpected failure; assignment transaction leaves no partial change
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ErrorEnvelope'
+              - type: object
+                properties:
+                  code:
+                    const: SERVER_ERROR
+          example:
+            success: false
+            message: An unexpected server error occurred.
+            data: null
+            errors: null
+            code: SERVER_ERROR

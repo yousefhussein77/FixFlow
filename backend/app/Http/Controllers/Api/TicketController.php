@@ -42,7 +42,7 @@ class TicketController extends Controller
     public function show(string $reference): JsonResponse
     {
         $request = request();
-        $ticket = $request->user()->tickets()->with(['department', 'category', 'photos'])->where('reference', $reference)->first();
+        $ticket = $request->user()->tickets()->with(['department', 'category', 'photos', 'rating'])->where('reference', $reference)->first();
         if (! $ticket) {
             TicketEvent::record('ticket.detail', 'concealed_not_found', $request->user()->id);
 
