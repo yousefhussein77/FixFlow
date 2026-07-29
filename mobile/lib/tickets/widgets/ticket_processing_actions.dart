@@ -55,10 +55,10 @@ class _TicketProcessingActionsState extends State<TicketProcessingActions> {
     final accepted = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reject ticket'),
+        title: const Text('رفض التذكرة'),
         content: FixFlowTextField(
           fieldKey: const Key('rejection_reason'),
-          label: 'Reason',
+          label: 'السبب',
           controller: reason,
           maxLength: 1000,
           maxLines: 4,
@@ -68,12 +68,12 @@ class _TicketProcessingActionsState extends State<TicketProcessingActions> {
         ),
         actions: [
           FixFlowButton(
-            label: 'Cancel',
+            label: 'إلغاء',
             variant: FixFlowButtonVariant.text,
             onPressed: () => Navigator.pop(context, false),
           ),
           FixFlowButton(
-            label: 'Reject',
+            label: 'رفض',
             variant: FixFlowButtonVariant.destructive,
             onPressed: () => Navigator.pop(context, true),
           ),
@@ -87,19 +87,17 @@ class _TicketProcessingActionsState extends State<TicketProcessingActions> {
     final accepted = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Start work?'),
-        content: const Text(
-          'Confirm that you are ready to begin work on this ticket.',
-        ),
+        title: const Text('بدء العمل؟'),
+        content: const Text('أكد أنك جاهز لبدء العمل على هذه التذكرة.'),
         actions: [
           FixFlowButton(
-            label: 'Cancel',
+            label: 'إلغاء',
             variant: FixFlowButtonVariant.text,
             onPressed: () => Navigator.pop(context, false),
           ),
           FixFlowButton(
             buttonKey: const Key('confirm_start_work'),
-            label: 'Start work',
+            label: 'بدء العمل',
             onPressed: () => Navigator.pop(context, true),
           ),
         ],
@@ -123,21 +121,21 @@ class _TicketProcessingActionsState extends State<TicketProcessingActions> {
         if (widget.ticket.status == 'assigned')
           FixFlowButton(
             buttonKey: const Key('start_work'),
-            label: 'Start work',
+            label: 'بدء العمل',
             icon: Icons.play_arrow,
             onPressed: busy ? null : _startWork,
           ),
         if (widget.ticket.status == 'in_progress')
           FixFlowButton(
             buttonKey: const Key('complete_ticket'),
-            label: 'Complete ticket',
+            label: 'إكمال التذكرة',
             icon: Icons.check_circle_outline,
             onPressed: busy ? null : () => _submit('completed'),
           ),
         const SizedBox(height: FixFlowSpacing.xs),
         FixFlowButton(
           buttonKey: const Key('reject_ticket'),
-          label: 'Reject ticket',
+          label: 'رفض التذكرة',
           variant: FixFlowButtonVariant.destructive,
           icon: Icons.cancel_outlined,
           onPressed: busy ? null : _reject,
@@ -159,5 +157,5 @@ class FixFlowStateViewCompatClosed extends StatelessWidget {
   const FixFlowStateViewCompatClosed({super.key});
 
   @override
-  Widget build(BuildContext context) => const Text('This ticket is closed.');
+  Widget build(BuildContext context) => const Text('هذه التذكرة مغلقة.');
 }

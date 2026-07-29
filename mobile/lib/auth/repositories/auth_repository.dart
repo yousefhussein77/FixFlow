@@ -72,7 +72,7 @@ class AuthRepositoryImpl implements AuthRepository {
     if (token == null || token.isEmpty) {
       throw const AuthFailure(
         AuthFailureKind.unauthenticated,
-        'Authentication required.',
+        'يرجى تسجيل الدخول للمتابعة.',
       );
     }
     try {

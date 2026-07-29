@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/auth_models.dart';
@@ -50,7 +51,7 @@ class AuthApiService {
     if (data is! Map<String, dynamic>) {
       throw const AuthFailure(
         AuthFailureKind.contract,
-        'The server returned an invalid profile.',
+        'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
       );
     }
     return UserProfile.fromJson(data);
@@ -86,20 +87,29 @@ class AuthApiService {
       return _decode(response);
     } on AuthFailure {
       rethrow;
-    } on SocketException catch (_) {
+    } on SocketException catch (error, stackTrace) {
+      _debugFailure(error, stackTrace);
       throw const AuthFailure(
         AuthFailureKind.offline,
-        'You appear to be offline. Check your connection and retry.',
+        'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
       );
-    } on TimeoutException catch (_) {
+    } on TimeoutException catch (error, stackTrace) {
+      _debugFailure(error, stackTrace);
       throw const AuthFailure(
         AuthFailureKind.offline,
-        'The connection timed out. Check your connection and retry.',
+        'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
       );
-    } on http.ClientException catch (_) {
+    } on http.ClientException catch (error, stackTrace) {
+      _debugFailure(error, stackTrace);
       throw const AuthFailure(
         AuthFailureKind.offline,
-        'Unable to reach FixFlow. Check your connection and retry.',
+        'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
+      );
+    } catch (error, stackTrace) {
+      _debugFailure(error, stackTrace);
+      throw const AuthFailure(
+        AuthFailureKind.contract,
+        'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
       );
     }
   }
@@ -107,13 +117,14 @@ class AuthApiService {
   Map<String, dynamic> _decode(http.Response response) {
     Map<String, dynamic> envelope;
     try {
-      final value = jsonDecode(response.body);
+      final value = jsonDecode(utf8.decode(response.bodyBytes));
       if (value is! Map<String, dynamic>) throw const FormatException();
       envelope = value;
-    } catch (_) {
+    } catch (error, stackTrace) {
+      _debugFailure(error, stackTrace);
       throw const AuthFailure(
         AuthFailureKind.contract,
-        'The server returned an invalid response.',
+        'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
       );
     }
 
@@ -121,22 +132,20 @@ class AuthApiService {
       if (envelope['success'] != true) {
         throw const AuthFailure(
           AuthFailureKind.contract,
-          'The server returned an invalid response.',
+          'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
         );
       }
       return envelope;
     }
 
-    final message = envelope['message'] is String
-        ? envelope['message'] as String
-        : 'The request could not be completed.';
+    final message = _messageForStatus(response.statusCode);
     final errors = <String, List<String>>{};
     final rawErrors = envelope['errors'];
     if (rawErrors is Map<String, dynamic>) {
       for (final entry in rawErrors.entries) {
         final value = entry.value;
-        if (value is List) {
-          errors[entry.key] = value.whereType<String>().toList();
+        if (value is List && value.isNotEmpty) {
+          errors[entry.key] = [_validationMessageForField(entry.key)];
         }
       }
     }
@@ -154,6 +163,28 @@ class AuthApiService {
     throw AuthFailure(AuthFailureKind.server, message);
   }
 
+  String _messageForStatus(int statusCode) => switch (statusCode) {
+    401 => 'بيانات الدخول غير صحيحة أو انتهت الجلسة.',
+    403 => 'ليست لديك صلاحية لتنفيذ هذا الإجراء.',
+    422 => 'تحقق من البيانات المدخلة ثم حاول مجدداً.',
+    _ => 'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
+  };
+
+  String _validationMessageForField(String field) => switch (field) {
+    'name' => 'تحقق من الاسم المدخل.',
+    'email' => 'تحقق من عنوان البريد الإلكتروني.',
+    'password' => 'تحقق من كلمة المرور.',
+    'password_confirmation' => 'تأكد من تطابق كلمتي المرور.',
+    _ => 'تحقق من القيمة المدخلة.',
+  };
+
+  void _debugFailure(Object error, StackTrace stackTrace) {
+    if (kDebugMode) {
+      debugPrint('Auth API failure: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   AuthSession _session(Map<String, dynamic> envelope) {
     final data = envelope['data'];
     if (data is! Map<String, dynamic> ||
@@ -162,7 +193,7 @@ class AuthApiService {
         (data['token'] as String).isEmpty) {
       throw const AuthFailure(
         AuthFailureKind.contract,
-        'The server returned an invalid session.',
+        'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
       );
     }
     return AuthSession(

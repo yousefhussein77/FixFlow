@@ -21,4 +21,15 @@ void main() {
     expect(guidance.toLowerCase(), contains('clear space'));
     expect(guidance.toLowerCase(), contains('prohibited'));
   });
+
+  test('dashboard uses the exact approved bitmap logo assets', () {
+    final mark = File('assets/brand/fixflow_logo_mark.png');
+    final wordmark = File('assets/brand/fixflow_logo_wordmark.png');
+    expect(mark.existsSync(), isTrue);
+    expect(wordmark.existsSync(), isTrue);
+    expect(mark.lengthSync(), greaterThan(0));
+    expect(wordmark.lengthSync(), greaterThan(0));
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    expect(pubspec, contains('    - assets/brand/'));
+  });
 }

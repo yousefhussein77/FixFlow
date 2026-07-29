@@ -32,7 +32,7 @@ void main() {
         size: const Size(320, 700),
       ),
     );
-    await tester.tap(find.byTooltip('Show password'));
+    await tester.tap(find.byTooltip('إظهار كلمة المرور'));
     await tester.pump();
     expect(controller.text, 'secret');
     expect(find.text('Required field'), findsOneWidget);

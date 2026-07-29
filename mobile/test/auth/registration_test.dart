@@ -74,6 +74,11 @@ void main() {
         find.byKey(const Key('register_confirmation')),
         'Password1234',
       );
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('register_submit')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.byKey(const Key('register_submit')));
       await tester.pump();
 
@@ -82,6 +87,95 @@ void main() {
         find.byKey(const Key('register_submit')),
       );
       expect(button.onPressed, isNull);
+    },
+  );
+
+  testWidgets(
+    'invalid registration fields remain editable and clear while editing',
+    (tester) async {
+      final controller = AuthController(
+        FakeAuthRepository(
+          failure: const AuthFailure(
+            AuthFailureKind.validation,
+            'تحقق من البيانات المدخلة ثم حاول مجدداً.',
+            fieldErrors: {
+              'email': ['تحقق من عنوان البريد الإلكتروني.'],
+              'password': ['تحقق من كلمة المرور.'],
+              'password_confirmation': ['تأكد من تطابق كلمتي المرور.'],
+            },
+          ),
+        ),
+      );
+      await tester.pumpWidget(
+        MaterialApp(home: RegisterScreen(controller: controller)),
+      );
+      await tester.enterText(
+        find.byKey(const Key('register_name')),
+        'Reporter',
+      );
+      await tester.enterText(
+        find.byKey(const Key('register_email')),
+        'invalid-email',
+      );
+      await tester.enterText(
+        find.byKey(const Key('register_password')),
+        'short',
+      );
+      await tester.enterText(
+        find.byKey(const Key('register_confirmation')),
+        'different',
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('register_submit')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byKey(const Key('register_submit')));
+      await tester.pumpAndSettle();
+
+      for (final key in const [
+        Key('register_email'),
+        Key('register_password'),
+        Key('register_confirmation'),
+      ]) {
+        final field = tester.widget<TextField>(find.byKey(key));
+        expect(field.enabled, isTrue);
+        expect(field.readOnly, isFalse);
+        expect(field.decoration?.errorText, isNotNull);
+      }
+
+      await tester.enterText(
+        find.byKey(const Key('register_email')),
+        'reporter@example.com',
+      );
+      await tester.enterText(
+        find.byKey(const Key('register_password')),
+        'Password1234',
+      );
+      await tester.enterText(
+        find.byKey(const Key('register_confirmation')),
+        'Password1234',
+      );
+      await tester.pump();
+
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('register_name')))
+            .controller
+            ?.text,
+        'Reporter',
+      );
+      for (final key in const [
+        Key('register_email'),
+        Key('register_password'),
+        Key('register_confirmation'),
+      ]) {
+        expect(
+          tester.widget<TextField>(find.byKey(key)).decoration?.errorText,
+          isNull,
+        );
+      }
+      expect(find.byKey(const Key('register_error')), findsNothing);
     },
   );
 
@@ -104,7 +198,7 @@ void main() {
       ),
     );
     expect(find.byKey(const Key('register_name')), findsOneWidget);
-    expect(find.byTooltip('Show password'), findsNWidgets(2));
+    expect(find.byTooltip('إظهار كلمة المرور'), findsNWidgets(2));
     await tester.scrollUntilVisible(
       find.byKey(const Key('register_submit')).first,
       200,

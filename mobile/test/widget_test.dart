@@ -11,8 +11,8 @@ void main() {
     await tester.pumpWidget(
       FixFlowApp(controller: AuthController(EmptyRepository())),
     );
-    expect(find.text('Sign in to FixFlow'), findsOneWidget);
-    expect(find.text('Create a reporter account'), findsOneWidget);
+    expect(find.text('تسجيل الدخول إلى FixFlow'), findsOneWidget);
+    expect(find.text('إنشاء حساب مُبلّغ'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

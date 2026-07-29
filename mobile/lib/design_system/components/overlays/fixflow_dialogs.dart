@@ -7,7 +7,7 @@ Future<bool> showFixFlowConfirmationDialog({
   required String title,
   required String message,
   required String confirmLabel,
-  String cancelLabel = 'Cancel',
+  String cancelLabel = 'إلغاء',
   bool destructive = false,
 }) async =>
     await showDialog<bool>(

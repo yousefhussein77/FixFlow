@@ -36,7 +36,7 @@ class TicketCommentApiService {
       if (decoded is! Map<String, dynamic>) throw const FormatException();
       if (response.statusCode >= 200 && response.statusCode < 300)
         return decoded;
-      final message = decoded['message'] as String? ?? 'Request failed.';
+      final message = _messageForStatus(response.statusCode);
       final errors = <String, List<String>>{};
       if (decoded['errors'] is Map<String, dynamic>)
         for (final entry
@@ -59,18 +59,25 @@ class TicketCommentApiService {
     } on SocketException {
       throw const TicketFailure(
         TicketFailureKind.offline,
-        'You appear to be offline.',
+        'لا يوجد اتصال بالإنترنت. تحقق من الاتصال وحاول مجدداً.',
       );
     } on http.ClientException {
       throw const TicketFailure(
         TicketFailureKind.offline,
-        'Unable to reach FixFlow.',
+        'تعذر الاتصال بخدمة FixFlow. حاول مجدداً.',
       );
     } catch (_) {
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'The server returned an invalid comment response.',
+        'تعذر معالجة استجابة التعليقات.',
       );
     }
   }
+
+  String _messageForStatus(int statusCode) => switch (statusCode) {
+    401 || 403 => 'ليست لديك صلاحية للوصول إلى التعليقات.',
+    404 => 'التذكرة غير متاحة.',
+    422 => 'تحقق من نص التعليق ثم حاول مجدداً.',
+    _ => 'تعذر تنفيذ الطلب. حاول مجدداً.',
+  };
 }

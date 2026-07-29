@@ -64,11 +64,11 @@ class _TicketAssignmentSheetState extends State<TicketAssignmentSheet> {
     final optionsBody = switch (options.status) {
       TechnicianOptionsStatus.loading => const FixFlowStateView(
         kind: FixFlowStateKind.loading,
-        title: 'Loading technicians',
+        title: 'جارٍ تحميل الفنيين',
       ),
       TechnicianOptionsStatus.empty => const FixFlowStateView(
         kind: FixFlowStateKind.empty,
-        title: 'No active technicians are available.',
+        title: 'لا يوجد فنيون نشطون متاحون.',
       ),
       TechnicianOptionsStatus.unauthorized ||
       TechnicianOptionsStatus.offline ||
@@ -78,14 +78,14 @@ class _TicketAssignmentSheetState extends State<TicketAssignmentSheet> {
             : options.status == TechnicianOptionsStatus.offline
             ? FixFlowStateKind.offline
             : FixFlowStateKind.serverError,
-        title: 'Unable to load technicians.',
+        title: 'تعذر تحميل الفنيين.',
         message: options.message,
-        actionLabel: 'Retry',
+        actionLabel: 'إعادة المحاولة',
         onAction: options.load,
       ),
       _ => FixFlowDropdownField<int>(
         key: const Key('technician_select'),
-        label: 'Active technician',
+        label: 'الفني النشط',
         value: selected,
         items: options.options.map((option) => option.id).toList(),
         itemLabel: (id) => options.options.firstWhere((o) => o.id == id).name,
@@ -93,7 +93,7 @@ class _TicketAssignmentSheetState extends State<TicketAssignmentSheet> {
       ),
     };
     return AlertDialog(
-      title: Text('Assign ${widget.ticket.reference}'),
+      title: Text('إسناد ${widget.ticket.reference}'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -112,20 +112,20 @@ class _TicketAssignmentSheetState extends State<TicketAssignmentSheet> {
             if (assignment.requiresRefresh)
               const Padding(
                 padding: EdgeInsets.only(top: FixFlowSpacing.sm),
-                child: Text('Refresh the ticket list before trying again.'),
+                child: Text('حدّث قائمة التذاكر قبل المحاولة مجدداً.'),
               ),
           ],
         ),
       ),
       actions: [
         FixFlowButton(
-          label: 'Cancel',
+          label: 'إلغاء',
           variant: FixFlowButtonVariant.text,
           onPressed: loading ? null : () => Navigator.pop(context),
         ),
         FixFlowButton(
           buttonKey: const Key('assignment_submit'),
-          label: 'Assign',
+          label: 'إسناد',
           loading: loading,
           onPressed:
               selected == null ||

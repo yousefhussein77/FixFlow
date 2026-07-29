@@ -77,14 +77,14 @@ class _TechnicianTicketDetailsScreenState
     actions: [
       FixFlowIconButton(
         icon: Icons.refresh,
-        label: 'Refresh ticket',
+        label: 'تحديث التذكرة',
         onPressed: controller.load,
       ),
     ],
     body: switch (controller.status) {
       TechnicianDetailStatus.loading => const FixFlowStateView(
         kind: FixFlowStateKind.loading,
-        title: 'Loading ticket',
+        title: 'جارٍ تحميل التذكرة',
       ),
       TechnicianDetailStatus.notFound ||
       TechnicianDetailStatus.unauthorized ||
@@ -92,10 +92,10 @@ class _TechnicianTicketDetailsScreenState
       TechnicianDetailStatus.serverError => FixFlowStateView(
         kind: _stateKind(controller.status),
         title: controller.status == TechnicianDetailStatus.notFound
-            ? 'Ticket unavailable'
-            : 'Unable to load ticket.',
+            ? 'التذكرة غير متاحة.'
+            : 'تعذر تحميل التذكرة.',
         message: controller.message,
-        actionLabel: 'Retry',
+        actionLabel: 'إعادة المحاولة',
         actionKey: const Key('technician_ticket_retry'),
         onAction: controller.load,
       ),
@@ -136,19 +136,19 @@ class _TicketDetailsBody extends StatelessWidget {
         ],
       ),
       FixFlowMetadataRow(
-        label: 'Category',
+        label: 'الفئة',
         value: '${ticket.department.name} / ${ticket.category.name}',
       ),
       FixFlowMetadataRow(
-        label: 'Assigned technician',
+        label: 'الفني المسند',
         value: ticket.assignedTechnician.name,
       ),
-      FixFlowMetadataRow(label: 'Location', value: ticket.location),
+      FixFlowMetadataRow(label: 'الموقع', value: ticket.location),
       const SizedBox(height: FixFlowSpacing.xs),
       FixFlowSurface(child: Text(ticket.description)),
       if (ticket.photos.isNotEmpty) ...[
         const SizedBox(height: FixFlowSpacing.sm),
-        Text('Photos', style: Theme.of(context).textTheme.titleMedium),
+        Text('الصور', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: FixFlowSpacing.xs),
         for (final photo in ticket.photos)
           Padding(
@@ -157,14 +157,14 @@ class _TicketDetailsBody extends StatelessWidget {
           ),
       ],
       const SizedBox(height: FixFlowSpacing.sm),
-      Text('History', style: Theme.of(context).textTheme.titleMedium),
+      Text('السجل', style: Theme.of(context).textTheme.titleMedium),
       for (final item in ticket.history)
         FixFlowHistoryItem(
           title: '${item.fromStatus} → ${item.toStatus}',
           details: [
             if (item.reason != null) item.reason!,
-            'Actor: ${item.actor.name}',
-            'Technician: ${item.assignedTechnician.name}',
+            'المنفذ: ${item.actor.name}',
+            'الفني: ${item.assignedTechnician.name}',
           ].join('\n'),
           timestamp: item.occurredAt.toLocal().toString(),
         ),
@@ -178,7 +178,7 @@ class _TicketDetailsBody extends StatelessWidget {
         const SizedBox(height: FixFlowSpacing.sm),
         FixFlowButton(
           buttonKey: const Key('technician_comments'),
-          label: 'Comments',
+          label: 'التعليقات',
           icon: Icons.forum_outlined,
           variant: FixFlowButtonVariant.outline,
           onPressed: () => Navigator.push(

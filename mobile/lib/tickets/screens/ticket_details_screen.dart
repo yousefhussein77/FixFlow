@@ -68,23 +68,23 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
     final t = s.ticket;
     if (t == null) {
       return FixFlowPage(
-        title: const Text('Ticket details'),
+        title: const Text('تفاصيل التذكرة'),
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (s.status == TicketDetailsStatus.loading)
               const FixFlowStateView(
                 kind: FixFlowStateKind.loading,
-                title: 'Loading ticket details',
+                title: 'جارٍ تحميل تفاصيل التذكرة',
               )
             else
               FixFlowStateView(
                 kind: _stateKind(s.status),
                 title: s.status == TicketDetailsStatus.notFound
-                    ? 'Ticket not found.'
-                    : 'Unable to load ticket.',
+                    ? 'التذكرة غير متاحة.'
+                    : 'تعذر تحميل التذكرة.',
                 message: s.message,
-                actionLabel: 'Retry',
+                actionLabel: 'إعادة المحاولة',
                 actionKey: const Key('detail_retry'),
                 onAction: () => controller.load(widget.reference),
               ),
@@ -94,7 +94,7 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
     }
 
     return FixFlowPage(
-      title: const Text('Ticket details'),
+      title: const Text('تفاصيل التذكرة'),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -126,29 +126,20 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Description',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text('الوصف', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: FixFlowSpacing.xs),
                 Text(t.description),
                 const SizedBox(height: FixFlowSpacing.sm),
+                FixFlowMetadataRow(label: 'القسم', value: t.department.name),
+                FixFlowMetadataRow(label: 'الفئة', value: t.category.name),
+                FixFlowMetadataRow(label: 'الموقع', value: t.location),
+                FixFlowMetadataRow(label: 'الصور', value: '${t.photos.length}'),
                 FixFlowMetadataRow(
-                  label: 'Department',
-                  value: t.department.name,
-                ),
-                FixFlowMetadataRow(label: 'Category', value: t.category.name),
-                FixFlowMetadataRow(label: 'Location', value: t.location),
-                FixFlowMetadataRow(
-                  label: 'Photos',
-                  value: '${t.photos.length}',
-                ),
-                FixFlowMetadataRow(
-                  label: 'Created',
+                  label: 'تاريخ الإنشاء',
                   value: t.createdAt.toLocal().toString(),
                 ),
                 FixFlowMetadataRow(
-                  label: 'Updated',
+                  label: 'آخر تحديث',
                   value: t.updatedAt.toLocal().toString(),
                 ),
               ],
@@ -156,7 +147,7 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
           ),
           if (t.photos.isNotEmpty) ...[
             const SizedBox(height: FixFlowSpacing.md),
-            Text('Photos', style: Theme.of(context).textTheme.titleLarge),
+            Text('الصور', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: FixFlowSpacing.xs),
             GridView.count(
               crossAxisCount: 2,
@@ -175,7 +166,7 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
               padding: const EdgeInsets.only(top: FixFlowSpacing.sm),
               child: FixFlowStateView(
                 kind: FixFlowStateKind.serverError,
-                title: 'Photo unavailable',
+                title: 'الصورة غير متاحة',
                 message: s.message,
               ),
             ),
@@ -193,7 +184,7 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
             const SizedBox(height: FixFlowSpacing.md),
             FixFlowButton(
               buttonKey: const Key('reporter_comments'),
-              label: 'Comments',
+              label: 'التعليقات',
               variant: FixFlowButtonVariant.outline,
               icon: Icons.forum_outlined,
               onPressed: () => Navigator.push(

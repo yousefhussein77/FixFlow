@@ -21,6 +21,7 @@ class AuthViewState {
     this.profile,
     this.message,
     this.fieldErrors = const {},
+    this.isRestoreFailure = false,
   });
 
   const AuthViewState.signedOut() : this(status: AuthViewStatus.signedOut);
@@ -29,6 +30,7 @@ class AuthViewState {
   final UserProfile? profile;
   final String? message;
   final Map<String, List<String>> fieldErrors;
+  final bool isRestoreFailure;
 
   bool get isLoading =>
       status == AuthViewStatus.loading || status == AuthViewStatus.restoring;
@@ -106,7 +108,17 @@ class AuthController extends ChangeNotifier {
               ),
       );
     } on AuthFailure catch (failure) {
-      if (generation == _generation) _setFailure(failure);
+      if (generation == _generation) {
+        if (kDebugMode) {
+          debugPrint('Session restore failed: $failure');
+        }
+        _setFailure(
+          failure,
+          message:
+              'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
+          isRestoreFailure: true,
+        );
+      }
     }
   }
 
@@ -137,7 +149,28 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  void _setFailure(AuthFailure failure) {
+  void clearFieldError(String field) {
+    if (_state.isLoading ||
+        (_state.message == null && !_state.fieldErrors.containsKey(field))) {
+      return;
+    }
+    final fieldErrors = Map<String, List<String>>.from(_state.fieldErrors)
+      ..remove(field);
+    _set(
+      AuthViewState(
+        status: fieldErrors.isEmpty
+            ? AuthViewStatus.signedOut
+            : AuthViewStatus.validationError,
+        fieldErrors: fieldErrors,
+      ),
+    );
+  }
+
+  void _setFailure(
+    AuthFailure failure, {
+    String? message,
+    bool isRestoreFailure = false,
+  }) {
     final status = switch (failure.kind) {
       AuthFailureKind.validation => AuthViewStatus.validationError,
       AuthFailureKind.unauthenticated => AuthViewStatus.unauthenticated,
@@ -149,8 +182,9 @@ class AuthController extends ChangeNotifier {
     _set(
       AuthViewState(
         status: status,
-        message: failure.message,
+        message: message ?? failure.message,
         fieldErrors: failure.fieldErrors,
+        isRestoreFailure: isRestoreFailure,
       ),
     );
   }

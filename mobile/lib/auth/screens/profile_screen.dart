@@ -67,12 +67,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final state = widget.controller.state;
     final profile = state.profile;
     return FixFlowPage(
-      title: const Text('My profile'),
+      title: const Text('ملفي الشخصي'),
       actions: [
         FixFlowIconButton(
           key: const Key('profile_refresh'),
           onPressed: state.isLoading ? null : widget.controller.refreshProfile,
-          label: 'Refresh profile',
+          label: 'تحديث الملف الشخصي',
           icon: Icons.refresh,
         ),
       ],
@@ -106,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 widget.ticketRepository != null) ...[
               FixFlowButton(
                 buttonKey: const Key('create_ticket'),
-                label: 'Create ticket',
+                label: 'إنشاء تذكرة',
                 icon: Icons.add,
                 onPressed: () => Navigator.push(
                   context,
@@ -123,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: FixFlowSpacing.xs),
               FixFlowButton(
                 buttonKey: const Key('my_tickets'),
-                label: 'My tickets',
+                label: 'تذاكري',
                 variant: FixFlowButtonVariant.outline,
                 icon: Icons.list_alt_outlined,
                 onPressed: () => Navigator.push(
@@ -142,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               if (widget.adminTicketRepository != null)
                 FixFlowButton(
                   buttonKey: const Key('admin_tickets'),
-                  label: 'All tickets',
+                  label: 'كل التذاكر',
                   icon: Icons.inbox_outlined,
                   onPressed: () => Navigator.push(
                     context,
@@ -157,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               if (widget.referenceController != null) ...[
                 FixFlowButton(
                   buttonKey: const Key('manage_departments'),
-                  label: 'Manage departments',
+                  label: 'إدارة الأقسام',
                   icon: Icons.apartment_outlined,
                   onPressed: () => Navigator.push(
                     context,
@@ -171,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: FixFlowSpacing.xs),
                 FixFlowButton(
                   buttonKey: const Key('manage_categories'),
-                  label: 'Manage categories',
+                  label: 'إدارة الفئات',
                   variant: FixFlowButtonVariant.outline,
                   icon: Icons.category_outlined,
                   onPressed: () => Navigator.push(
@@ -189,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 widget.technicianTicketRepository != null)
               FixFlowButton(
                 buttonKey: const Key('assigned_tickets'),
-                label: 'Assigned tickets',
+                label: 'التذاكر المسندة',
                 icon: Icons.assignment_ind_outlined,
                 onPressed: () => Navigator.push(
                   context,
@@ -209,13 +209,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             TextButton(
               onPressed: widget.controller.refreshProfile,
-              child: const Text('Retry'),
+              child: const Text('إعادة المحاولة'),
             ),
           ],
           const SizedBox(height: FixFlowSpacing.xl),
           FixFlowButton(
             buttonKey: const Key('logout_submit'),
-            label: 'Sign out',
+            label: 'تسجيل الخروج',
             variant: FixFlowButtonVariant.outline,
             icon: Icons.logout,
             onPressed: state.isLoading ? null : widget.controller.logout,

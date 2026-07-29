@@ -25,8 +25,8 @@ void main() {
         ),
       );
       expect(find.byType(Icon), findsNWidgets(8));
-      expect(find.text('Completed'), findsOneWidget);
-      expect(find.text('High priority'), findsOneWidget);
+      expect(find.text('مكتملة'), findsOneWidget);
+      expect(find.text('أولوية عالية'), findsOneWidget);
     });
   }
 }

@@ -64,7 +64,7 @@ class _FixFlowTextFieldState extends State<FixFlowTextField> {
       prefixIcon: widget.prefixIcon == null ? null : Icon(widget.prefixIcon),
       suffixIcon: widget.obscureText
           ? IconButton(
-              tooltip: obscured ? 'Show password' : 'Hide password',
+              tooltip: obscured ? 'إظهار كلمة المرور' : 'إخفاء كلمة المرور',
               onPressed: () => setState(() => obscured = !obscured),
               icon: Icon(obscured ? Icons.visibility : Icons.visibility_off),
             )

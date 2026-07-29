@@ -37,7 +37,7 @@ class UserProfile {
     } catch (_) {
       throw const AuthFailure(
         AuthFailureKind.contract,
-        'The server returned an invalid profile.',
+        'تعذر معالجة بيانات الملف الشخصي.',
       );
     }
   }

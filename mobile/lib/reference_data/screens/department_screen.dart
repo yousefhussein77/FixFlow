@@ -38,23 +38,21 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(
-          department == null ? 'Create department' : 'Edit department',
-        ),
+        title: Text(department == null ? 'إنشاء قسم' : 'تعديل القسم'),
         content: FixFlowTextField(
           fieldKey: const Key('department_name'),
-          label: 'Name',
+          label: 'الاسم',
           controller: name,
           error: widget.controller.state.errors['name']?.firstOrNull,
         ),
         actions: [
           FixFlowButton(
-            label: 'Cancel',
+            label: 'إلغاء',
             variant: FixFlowButtonVariant.text,
             onPressed: () => Navigator.pop(dialogContext),
           ),
           FixFlowButton(
-            label: 'Save',
+            label: 'حفظ',
             onPressed: () {
               Navigator.pop(dialogContext);
               widget.controller.saveDepartment(
@@ -82,21 +80,21 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
   Widget build(BuildContext context) {
     final s = widget.controller.state;
     return FixFlowPage(
-      title: const Text('Departments'),
+      title: const Text('الأقسام'),
       floatingActionButton: FixFlowFloatingButton(
         key: const Key('department_add'),
         icon: Icons.add,
-        label: 'Add department',
+        label: 'إضافة قسم',
         onPressed: () => _edit(),
       ),
       body: switch (s.status) {
         ReferenceStatus.loading => const FixFlowStateView(
           kind: FixFlowStateKind.loading,
-          title: 'Loading departments',
+          title: 'جارٍ تحميل الأقسام',
         ),
         ReferenceStatus.empty => const FixFlowStateView(
           kind: FixFlowStateKind.empty,
-          title: 'No departments yet.',
+          title: 'لا توجد أقسام بعد.',
         ),
         ReferenceStatus.unauthorized ||
         ReferenceStatus.offline ||
@@ -104,9 +102,9 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
         ReferenceStatus.validation ||
         ReferenceStatus.serverError => FixFlowStateView(
           kind: _stateKind(s.status),
-          title: 'Unable to load departments',
+          title: 'تعذر تحميل الأقسام',
           message: s.message,
-          actionLabel: 'Retry',
+          actionLabel: 'إعادة المحاولة',
           onAction: widget.controller.loadDepartments,
         ),
         _ => Column(
@@ -115,7 +113,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               Card(
                 child: ListTile(
                   title: Text(department.name),
-                  subtitle: Text(department.isActive ? 'Active' : 'Inactive'),
+                  subtitle: Text(department.isActive ? 'نشط' : 'غير نشط'),
                   onTap: () => _edit(department),
                   trailing: Switch(
                     value: department.isActive,

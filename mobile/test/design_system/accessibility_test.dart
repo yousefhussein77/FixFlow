@@ -26,7 +26,7 @@ void main() {
       ),
     );
     expect(find.bySemanticsLabel('Save ticket'), findsWidgets);
-    expect(find.text('Completed'), findsOneWidget);
+    expect(find.text('مكتملة'), findsOneWidget);
     expect(
       tester.getSize(find.byType(IconButton)).shortestSide,
       greaterThanOrEqualTo(FixFlowIcons.minimumTarget),

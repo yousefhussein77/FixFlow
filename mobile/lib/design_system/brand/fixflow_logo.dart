@@ -3,15 +3,51 @@ import 'package:flutter/material.dart';
 import '../theme/fixflow_colors.dart';
 import 'fixflow_brand.dart';
 
+enum FixFlowBitmapLogoVariant { mark, wordmark }
+
+class FixFlowBitmapLogo extends StatelessWidget {
+  const FixFlowBitmapLogo.mark({this.size = 40, super.key})
+    : variant = FixFlowBitmapLogoVariant.mark;
+  const FixFlowBitmapLogo.wordmark({this.size = 48, super.key})
+    : variant = FixFlowBitmapLogoVariant.wordmark;
+
+  final double size;
+  final FixFlowBitmapLogoVariant variant;
+
+  @override
+  Widget build(BuildContext context) {
+    final mark = variant == FixFlowBitmapLogoVariant.mark;
+    return Semantics(
+      image: true,
+      label: FixFlowBrand.name,
+      child: Image.asset(
+        mark
+            ? 'assets/brand/fixflow_logo_mark.png'
+            : 'assets/brand/fixflow_logo_wordmark.png',
+        width: mark ? size : size * 3.2,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        isAntiAlias: true,
+        excludeFromSemantics: true,
+      ),
+    );
+  }
+}
+
 class FixFlowLogo extends StatelessWidget {
   const FixFlowLogo({
     this.variant = FixFlowLogoVariant.horizontal,
     this.size = 48,
+    this.useApprovedBrandColors = false,
+    this.useGeometricMark = false,
     super.key,
   });
 
   final FixFlowLogoVariant variant;
   final double size;
+  final bool useApprovedBrandColors;
+  final bool useGeometricMark;
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +60,14 @@ class FixFlowLogo extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final primary = monochrome
         ? Theme.of(context).colorScheme.onSurface
-        : (dark ? const Color(0xFF8AA7FF) : FixFlowColors.brandPrimary);
+        : (useApprovedBrandColors || !dark
+              ? FixFlowColors.brandPrimary
+              : const Color(0xFF8AA7FF));
     final accent = monochrome
         ? primary
-        : (dark ? const Color(0xFFFFB55C) : FixFlowColors.brandAccent);
+        : (useApprovedBrandColors || !dark
+              ? FixFlowColors.brandAccent
+              : const Color(0xFFFFB55C));
 
     return Semantics(
       image: true,
@@ -41,7 +81,11 @@ class FixFlowLogo extends StatelessWidget {
           children: [
             SizedBox.square(
               dimension: effectiveSize,
-              child: CustomPaint(painter: _FixFlowMarkPainter(primary, accent)),
+              child: CustomPaint(
+                painter: useGeometricMark
+                    ? _FixFlowGeometricPainter(primary, accent)
+                    : _FixFlowMarkPainter(primary, accent),
+              ),
             ),
             if (horizontal) ...[
               SizedBox(width: effectiveSize * .22),
@@ -67,6 +111,57 @@ class FixFlowLogo extends StatelessWidget {
       ),
     );
   }
+}
+
+class _FixFlowGeometricPainter extends CustomPainter {
+  const _FixFlowGeometricPainter(this.primary, this.accent);
+  final Color primary;
+  final Color accent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / 100;
+    final blue = Paint()..color = primary;
+    final blueShade = Paint()..color = const Color(0xFF386CFF);
+    final orange = Paint()
+      ..color = accent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 9 * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final top = Path()
+      ..moveTo(50 * scale, 8 * scale)
+      ..lineTo(91 * scale, 30 * scale)
+      ..lineTo(50 * scale, 52 * scale)
+      ..lineTo(9 * scale, 30 * scale)
+      ..close();
+    final left = Path()
+      ..moveTo(9 * scale, 30 * scale)
+      ..lineTo(50 * scale, 52 * scale)
+      ..lineTo(50 * scale, 92 * scale)
+      ..lineTo(9 * scale, 69 * scale)
+      ..close();
+    final right = Path()
+      ..moveTo(50 * scale, 52 * scale)
+      ..lineTo(91 * scale, 30 * scale)
+      ..lineTo(91 * scale, 69 * scale)
+      ..lineTo(50 * scale, 92 * scale)
+      ..close();
+    canvas.drawPath(top, blueShade);
+    canvas.drawPath(left, blue);
+    canvas.drawPath(right, blue);
+    canvas.drawPath(
+      Path()
+        ..moveTo(31 * scale, 52 * scale)
+        ..lineTo(45 * scale, 66 * scale)
+        ..lineTo(73 * scale, 38 * scale),
+      orange,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _FixFlowGeometricPainter oldDelegate) =>
+      oldDelegate.primary != primary || oldDelegate.accent != accent;
 }
 
 class _FixFlowMarkPainter extends CustomPainter {

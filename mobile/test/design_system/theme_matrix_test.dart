@@ -35,8 +35,8 @@ void main() {
             brightness: brightness,
           ),
         );
-        expect(find.text('Completed'), findsOneWidget);
-        expect(find.text('High priority'), findsOneWidget);
+        expect(find.text('مكتملة'), findsOneWidget);
+        expect(find.text('أولوية عالية'), findsOneWidget);
         expect(find.text('Offline'), findsOneWidget);
         expect(find.text('Conflict'), findsOneWidget);
         expect(tester.takeException(), isNull);

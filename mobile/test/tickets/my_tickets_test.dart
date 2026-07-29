@@ -29,7 +29,7 @@ void main() {
       MaterialApp(home: MyTicketsScreen(repository: EmptyRepo())),
     );
     await tester.pumpAndSettle();
-    expect(find.text('You have no tickets yet.'), findsOneWidget);
+    expect(find.text('لا توجد لديك تذاكر بعد.'), findsOneWidget);
   });
 
   testWidgets('reporter list reflows at 320 pixels and 200% text', (

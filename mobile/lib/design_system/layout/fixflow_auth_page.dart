@@ -23,8 +23,8 @@ class FixFlowAuthPage extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Align(child: FixFlowLogo(size: 44)),
-        const SizedBox(height: FixFlowSpacing.lg),
+        const Align(child: FixFlowBitmapLogo.mark(size: 180)),
+        const SizedBox(height: FixFlowSpacing.sm),
         Text(
           title,
           textAlign: TextAlign.center,

@@ -56,32 +56,32 @@ class _AdminTicketListScreenState extends State<AdminTicketListScreen> {
 
   @override
   Widget build(BuildContext context) => FixFlowPage(
-    title: const Text('All tickets'),
+    title: const Text('كل التذاكر'),
     actions: [
       FixFlowIconButton(
         icon: Icons.refresh,
-        label: 'Refresh tickets',
+        label: 'تحديث التذاكر',
         onPressed: controller.load,
       ),
     ],
     body: switch (controller.state.status) {
       AdminTicketListStatus.loading => const FixFlowStateView(
         kind: FixFlowStateKind.loading,
-        title: 'Loading tickets',
+        title: 'جارٍ تحميل التذاكر',
       ),
       AdminTicketListStatus.empty => const FixFlowStateView(
         kind: FixFlowStateKind.empty,
-        title: 'There are no tickets.',
+        title: 'لا توجد تذاكر.',
       ),
       AdminTicketListStatus.unauthorized ||
       AdminTicketListStatus.offline ||
       AdminTicketListStatus.serverError => FixFlowStateView(
         kind: _stateKind(controller.state.status),
         title: controller.state.status == AdminTicketListStatus.unauthorized
-            ? 'Tickets are unavailable'
-            : 'Unable to load tickets.',
+            ? 'التذاكر غير متاحة.'
+            : 'تعذر تحميل التذاكر.',
         message: controller.state.message,
-        actionLabel: 'Retry',
+        actionLabel: 'إعادة المحاولة',
         actionKey: const Key('admin_tickets_retry'),
         onAction: controller.load,
       ),
@@ -110,13 +110,13 @@ class _AdminTicketListScreenState extends State<AdminTicketListScreen> {
           if (controller.state.status == AdminTicketListStatus.loadingMore)
             const FixFlowStateView(
               kind: FixFlowStateKind.loading,
-              title: 'Loading more tickets',
+              title: 'جارٍ تحميل المزيد من التذاكر',
             ),
           if (controller.state.status != AdminTicketListStatus.loadingMore)
             TextButton(
               key: const Key('admin_tickets_more'),
               onPressed: () => controller.load(refresh: false),
-              child: const Text('Load more'),
+              child: const Text('تحميل المزيد'),
             ),
         ],
       ),
@@ -177,10 +177,10 @@ class _AdminTicketCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: FixFlowSpacing.xs),
-                  Text('Reporter: ${ticket.reporter.name}'),
+                  Text('المُبلّغ: ${ticket.reporter.name}'),
                   Text('${ticket.department.name} / ${ticket.category.name}'),
                   Text(
-                    'Assigned: ${ticket.assignedTechnician?.name ?? 'Unassigned'}',
+                    'المسند إليه: ${ticket.assignedTechnician?.name ?? 'غير مسندة'}',
                   ),
                 ],
               ),
@@ -190,7 +190,7 @@ class _AdminTicketCard extends StatelessWidget {
             const SizedBox(height: FixFlowSpacing.sm),
             FixFlowButton(
               buttonKey: Key('assign_${ticket.reference}'),
-              label: 'Assign',
+              label: 'إسناد',
               icon: Icons.person_add_outlined,
               onPressed: onAssign,
             ),

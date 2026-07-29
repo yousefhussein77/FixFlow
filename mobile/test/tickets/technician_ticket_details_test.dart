@@ -36,7 +36,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Leak'), findsNWidgets(2));
-    expect(find.text('History'), findsOneWidget);
+    expect(find.text('السجل'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

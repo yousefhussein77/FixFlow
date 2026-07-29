@@ -24,10 +24,7 @@ void main() {
     expect(find.text('<b>not markup</b>'), findsOneWidget);
     await tester.tap(find.byKey(const Key('comment_submit')));
     await tester.pump();
-    expect(
-      find.text('Enter a comment from 1 to 2000 characters.'),
-      findsOneWidget,
-    );
+    expect(find.text('أدخل تعليقاً من 1 إلى 2000 حرف.'), findsOneWidget);
   });
 
   testWidgets('comment composer reflows at 320 pixels and 200% text', (

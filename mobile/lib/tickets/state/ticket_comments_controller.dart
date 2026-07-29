@@ -56,7 +56,7 @@ class TicketCommentsController extends ChangeNotifier {
     final trimmed = draft.trim();
     if (trimmed.isEmpty || trimmed.length > 2000) {
       status = TicketCommentsStatus.validation;
-      message = 'Enter a comment from 1 to 2000 characters.';
+      message = 'أدخل تعليقاً من 1 إلى 2000 حرف.';
       notifyListeners();
       return;
     }

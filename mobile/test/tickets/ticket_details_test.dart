@@ -39,8 +39,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Leak'), findsOneWidget);
-    expect(find.text('Location: Floor 2'), findsOneWidget);
-    expect(find.text('Photos: 0'), findsOneWidget);
+    expect(find.text('الموقع: Floor 2'), findsOneWidget);
+    expect(find.text('الصور: 0'), findsOneWidget);
   });
 
   testWidgets('reporter detail reflows at 320 pixels and 200% text', (

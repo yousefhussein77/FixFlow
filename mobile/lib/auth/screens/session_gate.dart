@@ -16,6 +16,8 @@ import '../../design_system/components/buttons/fixflow_buttons.dart';
 import '../../design_system/components/feedback/fixflow_state_view.dart';
 import '../../design_system/layout/fixflow_page.dart';
 import '../../design_system/tokens/fixflow_spacing.dart';
+import '../../tickets/screens/administrator_dashboard_screen.dart';
+import '../../design_system/theme/fixflow_theme_controller.dart';
 
 class SessionGate extends StatefulWidget {
   const SessionGate({
@@ -27,6 +29,7 @@ class SessionGate extends StatefulWidget {
     this.ticketCommentRepository,
     this.ticketRatingRepository,
     this.ticketPhotoPicker,
+    this.themeController,
     super.key,
   });
   final AuthController controller;
@@ -37,6 +40,7 @@ class SessionGate extends StatefulWidget {
   final TicketCommentRepository? ticketCommentRepository;
   final TicketRatingRepository? ticketRatingRepository;
   final TicketPhotoPicker? ticketPhotoPicker;
+  final ThemeController? themeController;
 
   @override
   State<SessionGate> createState() => _SessionGateState();
@@ -69,11 +73,11 @@ class _SessionGateState extends State<SessionGate> {
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FixFlowLogo(size: 48),
+            FixFlowBitmapLogo.mark(size: 130),
             SizedBox(height: FixFlowSpacing.lg),
             FixFlowStateView(
               kind: FixFlowStateKind.loading,
-              title: 'Restoring your session',
+              title: 'جارٍ استعادة جلستك',
             ),
           ],
         ),
@@ -81,6 +85,16 @@ class _SessionGateState extends State<SessionGate> {
     }
     if (state.status == AuthViewStatus.authenticated ||
         (state.isLoading && state.profile != null)) {
+      if (state.profile?.role == 'administrator' &&
+          widget.adminTicketRepository != null) {
+        return AdministratorDashboardScreen(
+          authController: widget.controller,
+          repository: widget.adminTicketRepository!,
+          referenceController: widget.referenceController,
+          commentRepository: widget.ticketCommentRepository,
+          themeController: widget.themeController,
+        );
+      }
       return ProfileScreen(
         controller: widget.controller,
         referenceController: widget.referenceController,
@@ -92,9 +106,10 @@ class _SessionGateState extends State<SessionGate> {
         ticketPhotoPicker: widget.ticketPhotoPicker,
       );
     }
-    if (state.status == AuthViewStatus.offline ||
-        state.status == AuthViewStatus.serverError ||
-        state.status == AuthViewStatus.storageError) {
+    if (state.isRestoreFailure &&
+        (state.status == AuthViewStatus.offline ||
+            state.status == AuthViewStatus.serverError ||
+            state.status == AuthViewStatus.storageError)) {
       final kind = state.status == AuthViewStatus.offline
           ? FixFlowStateKind.offline
           : FixFlowStateKind.serverError;
@@ -102,19 +117,19 @@ class _SessionGateState extends State<SessionGate> {
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const FixFlowLogo(size: 48),
+            const FixFlowBitmapLogo.mark(size: 130),
             const SizedBox(height: FixFlowSpacing.lg),
             FixFlowStateView(
               kind: kind,
-              title: 'Unable to restore your session',
+              title: 'تعذر استعادة جلستك',
               message: state.message,
-              actionLabel: 'Retry',
+              actionLabel: 'إعادة المحاولة',
               actionKey: const Key('session_retry'),
               onAction: widget.controller.restore,
             ),
             const SizedBox(height: FixFlowSpacing.sm),
             FixFlowButton(
-              label: 'Sign out locally',
+              label: 'تسجيل الخروج محلياً',
               variant: FixFlowButtonVariant.text,
               onPressed: widget.controller.logout,
             ),

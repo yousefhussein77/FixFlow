@@ -54,32 +54,32 @@ class _AssignedTicketsScreenState extends State<AssignedTicketsScreen> {
 
   @override
   Widget build(BuildContext context) => FixFlowPage(
-    title: const Text('Assigned tickets'),
+    title: const Text('التذاكر المسندة'),
     actions: [
       FixFlowIconButton(
         icon: Icons.refresh,
-        label: 'Refresh assigned tickets',
+        label: 'تحديث التذاكر المسندة',
         onPressed: controller.load,
       ),
     ],
     body: switch (controller.status) {
       AssignedTicketsStatus.loading => const FixFlowStateView(
         kind: FixFlowStateKind.loading,
-        title: 'Loading assigned tickets',
+        title: 'جارٍ تحميل التذاكر المسندة',
       ),
       AssignedTicketsStatus.empty => const FixFlowStateView(
         kind: FixFlowStateKind.empty,
-        title: 'No tickets are assigned to you.',
+        title: 'لا توجد تذاكر مسندة إليك.',
       ),
       AssignedTicketsStatus.unauthorized ||
       AssignedTicketsStatus.offline ||
       AssignedTicketsStatus.serverError => FixFlowStateView(
         kind: _stateKind(controller.status),
         title: controller.status == AssignedTicketsStatus.unauthorized
-            ? 'Assigned tickets are unavailable'
-            : 'Unable to load assigned tickets.',
+            ? 'التذاكر المسندة غير متاحة.'
+            : 'تعذر تحميل التذاكر المسندة.',
         message: controller.message,
-        actionLabel: 'Retry',
+        actionLabel: 'إعادة المحاولة',
         actionKey: const Key('assigned_tickets_retry'),
         onAction: controller.load,
       ),
@@ -109,12 +109,12 @@ class _AssignedTicketsScreenState extends State<AssignedTicketsScreen> {
           if (controller.status == AssignedTicketsStatus.loadingMore)
             const FixFlowStateView(
               kind: FixFlowStateKind.loading,
-              title: 'Loading more tickets',
+              title: 'جارٍ تحميل المزيد من التذاكر',
             )
           else
             FixFlowButton(
               buttonKey: const Key('assigned_tickets_more'),
-              label: 'Load more',
+              label: 'تحميل المزيد',
               variant: FixFlowButtonVariant.text,
               onPressed: () => controller.load(refresh: false),
             ),

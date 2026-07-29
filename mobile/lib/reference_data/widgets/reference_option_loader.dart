@@ -47,21 +47,21 @@ class _LoaderState extends State<ReferenceOptionLoader> {
     if (s.status == ReferenceStatus.loading)
       return const FixFlowStateView(
         kind: FixFlowStateKind.loading,
-        title: 'Loading options',
+        title: 'جارٍ تحميل الخيارات',
       );
     if (s.status == ReferenceStatus.empty)
       return const FixFlowStateView(
         kind: FixFlowStateKind.empty,
-        title: 'No active options available.',
+        title: 'لا توجد خيارات نشطة متاحة.',
       );
     if (s.message != null)
       return Column(
         children: [
           FixFlowStateView(
             kind: FixFlowStateKind.serverError,
-            title: 'Unable to load options',
+            title: 'تعذر تحميل الخيارات',
             message: s.message,
-            actionLabel: 'Retry',
+            actionLabel: 'إعادة المحاولة',
             onAction: _load,
           ),
         ],

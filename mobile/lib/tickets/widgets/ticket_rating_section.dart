@@ -73,14 +73,14 @@ class _TicketRatingSectionState extends State<TicketRatingSection> {
     if (rating != null) {
       return FixFlowSurface(
         child: Semantics(
-          label: 'Ticket rating ${rating.value} out of 5',
+          label: 'تقييم التذكرة ${rating.value} من 5',
           child: Row(
             children: [
               const Icon(Icons.star_rate_outlined),
               const SizedBox(width: FixFlowSpacing.xs),
               Expanded(
                 child: Text(
-                  'Rating: ${rating.value}/5',
+                  'التقييم: ${rating.value}/5',
                   key: const Key('rating_value'),
                 ),
               ),
@@ -92,7 +92,7 @@ class _TicketRatingSectionState extends State<TicketRatingSection> {
     if (!widget.completed) {
       return const FixFlowStateView(
         kind: FixFlowStateKind.empty,
-        title: 'Rating available after completion.',
+        title: 'التقييم متاح بعد إكمال التذكرة.',
         key: Key('rating_ineligible'),
       );
     }
@@ -101,12 +101,12 @@ class _TicketRatingSectionState extends State<TicketRatingSection> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Rate completed service',
+            'قيّم الخدمة المكتملة',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: FixFlowSpacing.sm),
           Semantics(
-            label: 'Rating from 1 to 5',
+            label: 'التقييم من 1 إلى 5',
             child: SegmentedButton<int>(
               key: const Key('rating_input'),
               emptySelectionAllowed: true,
@@ -125,7 +125,7 @@ class _TicketRatingSectionState extends State<TicketRatingSection> {
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowButton(
             buttonKey: const Key('rating_submit'),
-            label: 'Submit rating',
+            label: 'إرسال التقييم',
             loading: controller.isSubmitting,
             onPressed: controller.isSubmitting
                 ? null

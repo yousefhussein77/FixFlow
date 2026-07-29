@@ -59,7 +59,7 @@ void main() {
       );
       expect(
         tester.getSemantics(find.byKey(const Key('logout_submit'))).label,
-        contains('Sign out'),
+        contains('تسجيل الخروج'),
       );
       expect(tester.takeException(), isNull);
     },

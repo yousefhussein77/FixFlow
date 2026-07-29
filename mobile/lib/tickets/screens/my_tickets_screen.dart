@@ -57,23 +57,23 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
   Widget build(BuildContext context) {
     final s = controller.state;
     return FixFlowPage(
-      title: const Text('My tickets'),
+      title: const Text('تذاكري'),
       body: switch (s.status) {
         MyTicketsStatus.loading => const FixFlowStateView(
           kind: FixFlowStateKind.loading,
-          title: 'Loading tickets',
+          title: 'جارٍ تحميل التذاكر',
         ),
         MyTicketsStatus.empty => Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const FixFlowStateView(
               kind: FixFlowStateKind.empty,
-              title: 'You have no tickets yet.',
+              title: 'لا توجد لديك تذاكر بعد.',
             ),
             const SizedBox(height: FixFlowSpacing.sm),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Create a ticket'),
+              child: const Text('إنشاء تذكرة'),
             ),
           ],
         ),
@@ -82,10 +82,10 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
         MyTicketsStatus.unauthorized => FixFlowStateView(
           kind: _stateKind(s.status),
           title: s.status == MyTicketsStatus.unauthorized
-              ? 'Tickets are unavailable'
-              : 'Unable to load tickets.',
+              ? 'التذاكر غير متاحة.'
+              : 'تعذر تحميل التذاكر.',
           message: s.message,
-          actionLabel: 'Retry',
+          actionLabel: 'إعادة المحاولة',
           actionKey: const Key('tickets_retry'),
           onAction: controller.load,
         ),
@@ -118,13 +118,13 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
             if (s.status == MyTicketsStatus.loadingMore)
               const FixFlowStateView(
                 kind: FixFlowStateKind.loading,
-                title: 'Loading more tickets',
+                title: 'جارٍ تحميل المزيد من التذاكر',
               ),
             if (controller.state.status != MyTicketsStatus.loadingMore)
               TextButton(
                 key: const Key('tickets_more'),
                 onPressed: () => controller.load(refresh: false),
-                child: const Text('Load more'),
+                child: const Text('تحميل المزيد'),
               ),
           ],
         ),

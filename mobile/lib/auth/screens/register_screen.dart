@@ -33,6 +33,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant RegisterScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_changed);
+      widget.controller.addListener(_changed);
+    }
+  }
+
+  @override
   void dispose() {
     widget.controller.removeListener(_changed);
     _name.dispose();
@@ -51,40 +60,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final state = widget.controller.state;
     final loading = state.status == AuthViewStatus.loading;
     return FixFlowAuthPage(
-      title: 'Create reporter account',
-      subtitle: 'Report and follow maintenance requests in one place.',
+      title: 'إنشاء حساب مُبلّغ',
+      subtitle: 'أبلغ عن طلبات الصيانة وتابعها من مكان واحد.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           FixFlowTextField(
             fieldKey: const Key('register_name'),
-            label: 'Name',
+            label: 'الاسم',
             controller: _name,
             error: state.fieldErrors['name']?.firstOrNull,
+            onChanged: (_) => widget.controller.clearFieldError('name'),
           ),
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowTextField(
             fieldKey: const Key('register_email'),
-            label: 'Email',
+            label: 'البريد الإلكتروني',
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             error: state.fieldErrors['email']?.firstOrNull,
+            onChanged: (_) => widget.controller.clearFieldError('email'),
           ),
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowTextField(
             fieldKey: const Key('register_password'),
-            label: 'Password',
+            label: 'كلمة المرور',
             controller: _password,
             obscureText: true,
-            helper: '12–128 characters with a letter and number',
+            helper: 'من 12 إلى 128 حرفاً، مع حرف ورقم',
             error: state.fieldErrors['password']?.firstOrNull,
+            onChanged: (_) => widget.controller.clearFieldError('password'),
           ),
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowTextField(
             fieldKey: const Key('register_confirmation'),
-            label: 'Confirm password',
+            label: 'تأكيد كلمة المرور',
             controller: _confirmation,
             obscureText: true,
+            error: state.fieldErrors['password_confirmation']?.firstOrNull,
+            onChanged: (_) =>
+                widget.controller.clearFieldError('password_confirmation'),
           ),
           if (state.message != null) ...[
             const SizedBox(height: FixFlowSpacing.sm),
@@ -97,7 +112,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: FixFlowSpacing.md),
           FixFlowButton(
             buttonKey: const Key('register_submit'),
-            label: 'Create account',
+            label: 'إنشاء الحساب',
             loading: loading,
             onPressed: loading
                 ? null
@@ -109,7 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
           ),
           FixFlowButton(
-            label: 'Already have an account? Sign in',
+            label: 'لديك حساب بالفعل؟ تسجيل الدخول',
             variant: FixFlowButtonVariant.text,
             onPressed: loading ? null : widget.onShowSignIn,
           ),

@@ -101,7 +101,7 @@ class TicketCreationController extends ChangeNotifier {
       _set(
         const TicketCreationState(
           TicketCreationStatus.photoValidation,
-          message: 'Choose no more than five photos.',
+          message: 'اختر خمس صور كحد أقصى.',
         ),
       );
       return false;
@@ -137,7 +137,7 @@ class TicketCreationController extends ChangeNotifier {
         const TicketCreationState(
           TicketCreationStatus.validation,
           errors: {
-            'category_id': ['Select a department and category.'],
+            'category_id': ['اختر القسم والفئة.'],
           },
         ),
       );

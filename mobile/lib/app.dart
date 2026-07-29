@@ -11,8 +11,9 @@ import 'tickets/repositories/ticket_comment_repository.dart';
 import 'tickets/repositories/ticket_rating_repository.dart';
 import 'tickets/services/ticket_photo_picker.dart';
 import 'design_system/theme/fixflow_theme.dart';
+import 'design_system/theme/fixflow_theme_controller.dart';
 
-class FixFlowApp extends StatelessWidget {
+class FixFlowApp extends StatefulWidget {
   const FixFlowApp({
     required this.controller,
     this.referenceController,
@@ -22,6 +23,7 @@ class FixFlowApp extends StatelessWidget {
     this.ticketCommentRepository,
     this.ticketRatingRepository,
     this.ticketPhotoPicker,
+    this.themeController,
     super.key,
   });
   final AuthController controller;
@@ -32,30 +34,59 @@ class FixFlowApp extends StatelessWidget {
   final TicketCommentRepository? ticketCommentRepository;
   final TicketRatingRepository? ticketRatingRepository;
   final TicketPhotoPicker? ticketPhotoPicker;
+  final ThemeController? themeController;
+
+  @override
+  State<FixFlowApp> createState() => _FixFlowAppState();
+}
+
+class _FixFlowAppState extends State<FixFlowApp> {
+  late final ThemeController _themeController;
+  late final bool _ownsThemeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsThemeController = widget.themeController == null;
+    _themeController =
+        widget.themeController ?? ThemeController(SecureThemePreferenceStore())
+          ..restore();
+  }
+
+  @override
+  void dispose() {
+    if (_ownsThemeController) _themeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FixFlow',
-      debugShowCheckedModeBanner: false,
-      theme: FixFlowTheme.light(),
-      darkTheme: FixFlowTheme.dark(),
-      themeMode: ThemeMode.system,
-      supportedLocales: const [Locale('ar'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: SessionGate(
-        controller: controller,
-        referenceController: referenceController,
-        ticketRepository: ticketRepository,
-        adminTicketRepository: adminTicketRepository,
-        technicianTicketRepository: technicianTicketRepository,
-        ticketCommentRepository: ticketCommentRepository,
-        ticketRatingRepository: ticketRatingRepository,
-        ticketPhotoPicker: ticketPhotoPicker,
+    return AnimatedBuilder(
+      animation: _themeController,
+      builder: (context, _) => MaterialApp(
+        title: 'FixFlow',
+        debugShowCheckedModeBanner: false,
+        locale: const Locale('ar'),
+        theme: FixFlowTheme.light(),
+        darkTheme: FixFlowTheme.dark(),
+        themeMode: _themeController.mode,
+        supportedLocales: const [Locale('ar'), Locale('en')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: SessionGate(
+          controller: widget.controller,
+          referenceController: widget.referenceController,
+          ticketRepository: widget.ticketRepository,
+          adminTicketRepository: widget.adminTicketRepository,
+          technicianTicketRepository: widget.technicianTicketRepository,
+          ticketCommentRepository: widget.ticketCommentRepository,
+          ticketRatingRepository: widget.ticketRatingRepository,
+          ticketPhotoPicker: widget.ticketPhotoPicker,
+          themeController: _themeController,
+        ),
       ),
     );
   }

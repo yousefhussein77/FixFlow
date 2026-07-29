@@ -42,7 +42,7 @@ class _TicketCommentsScreenState extends State<TicketCommentsScreen> {
 
   @override
   Widget build(BuildContext context) => FixFlowPage(
-    title: Text('${widget.reference} comments'),
+    title: Text('${widget.reference} - التعليقات'),
     body: TicketCommentsSection(controller: controller),
   );
 }

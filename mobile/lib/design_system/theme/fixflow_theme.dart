@@ -195,25 +195,25 @@ abstract final class FixFlowTheme {
       const Color(0xFF1E3A8A),
       const Color(0xFFDBEAFE),
       Icons.info_outline,
-      'Information',
+      'معلومات',
     );
     final success = _style(
       const Color(0xFF166534),
       const Color(0xFFDCFCE7),
       Icons.check_circle_outline,
-      'Success',
+      'نجاح',
     );
     final warning = _style(
       const Color(0xFF92400E),
       const Color(0xFFFEF3C7),
       Icons.warning_amber_outlined,
-      'Warning',
+      'تحذير',
     );
     final error = _style(
       const Color(0xFF991B1B),
       const Color(0xFFFEE2E2),
       Icons.error_outline,
-      'Error',
+      'خطأ',
     );
     return FixFlowSemanticColors(
       information: info,
@@ -226,25 +226,25 @@ abstract final class FixFlowTheme {
           const Color(0xFF5B21B6),
           const Color(0xFFEDE9FE),
           Icons.assignment_ind_outlined,
-          'Assigned',
+          'مسندة',
         ),
         'in_progress': _style(
           warning.foreground,
           warning.container,
           Icons.handyman_outlined,
-          'In progress',
+          'قيد التنفيذ',
         ),
         'completed': _style(
           success.foreground,
           success.container,
           Icons.task_alt_outlined,
-          'Completed',
+          'مكتملة',
         ),
         'rejected': _style(
           error.foreground,
           error.container,
           Icons.cancel_outlined,
-          'Rejected',
+          'مرفوضة',
         ),
       },
       priorities: {
@@ -252,19 +252,19 @@ abstract final class FixFlowTheme {
           const Color(0xFF334155),
           const Color(0xFFE2E8F0),
           Icons.keyboard_arrow_down,
-          'Low priority',
+          'أولوية منخفضة',
         ),
         'medium': _style(
           warning.foreground,
           warning.container,
           Icons.remove,
-          'Medium priority',
+          'أولوية متوسطة',
         ),
         'high': _style(
           error.foreground,
           error.container,
           Icons.priority_high,
-          'High priority',
+          'أولوية عالية',
         ),
       },
     );
@@ -306,25 +306,25 @@ abstract final class FixFlowTheme {
           const Color(0xFFEDE9FE),
           const Color(0xFF4C1D95),
           Icons.assignment_ind_outlined,
-          'Assigned',
+          'مسندة',
         ),
         'in_progress': _style(
           warning.foreground,
           warning.container,
           Icons.handyman_outlined,
-          'In progress',
+          'قيد التنفيذ',
         ),
         'completed': _style(
           success.foreground,
           success.container,
           Icons.task_alt_outlined,
-          'Completed',
+          'مكتملة',
         ),
         'rejected': _style(
           error.foreground,
           error.container,
           Icons.cancel_outlined,
-          'Rejected',
+          'مرفوضة',
         ),
       },
       priorities: {
@@ -332,19 +332,19 @@ abstract final class FixFlowTheme {
           const Color(0xFFF1F5F9),
           const Color(0xFF334155),
           Icons.keyboard_arrow_down,
-          'Low priority',
+          'أولوية منخفضة',
         ),
         'medium': _style(
           warning.foreground,
           warning.container,
           Icons.remove,
-          'Medium priority',
+          'أولوية متوسطة',
         ),
         'high': _style(
           error.foreground,
           error.container,
           Icons.priority_high,
-          'High priority',
+          'أولوية عالية',
         ),
       },
     );

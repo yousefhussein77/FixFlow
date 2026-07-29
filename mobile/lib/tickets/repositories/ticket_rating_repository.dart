@@ -25,14 +25,14 @@ class TicketRatingRepositoryImpl implements TicketRatingRepository {
     if (rating < 1 || rating > 5) {
       throw const TicketFailure(
         TicketFailureKind.validation,
-        'Choose a rating from 1 to 5.',
+        'اختر تقييماً من 1 إلى 5.',
       );
     }
     final token = await store.read();
     if (token == null) {
       throw const TicketFailure(
         TicketFailureKind.unauthorized,
-        'Authentication required.',
+        'يرجى تسجيل الدخول للمتابعة.',
       );
     }
     final envelope = await api.create(
@@ -48,7 +48,7 @@ class TicketRatingRepositoryImpl implements TicketRatingRepository {
     } catch (_) {
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'The server returned an invalid rating response.',
+        'تعذر معالجة بيانات التقييم.',
       );
     }
   }

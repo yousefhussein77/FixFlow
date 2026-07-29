@@ -61,17 +61,17 @@ class _TicketCommentsSectionState extends State<TicketCommentsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Comments', style: Theme.of(context).textTheme.titleLarge),
+          Text('التعليقات', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: FixFlowSpacing.sm),
           if (c.status == TicketCommentsStatus.loading)
             const FixFlowStateView(
               kind: FixFlowStateKind.loading,
-              title: 'Loading comments',
+              title: 'جارٍ تحميل التعليقات',
             ),
           if (c.status == TicketCommentsStatus.empty)
             const FixFlowStateView(
               kind: FixFlowStateKind.empty,
-              title: 'No comments yet.',
+              title: 'لا توجد تعليقات بعد.',
             ),
           for (final comment in c.comments) ...[
             Padding(
@@ -89,13 +89,13 @@ class _TicketCommentsSectionState extends State<TicketCommentsSection> {
             FixFlowStateView(
               kind: _stateKind(c.status),
               title: c.status == TicketCommentsStatus.validation
-                  ? 'Comment needs attention'
-                  : 'Unable to load comments',
+                  ? 'يحتاج التعليق إلى مراجعة'
+                  : 'تعذر تحميل التعليقات',
               message: c.message,
               actionLabel:
                   c.status == TicketCommentsStatus.offline ||
                       c.status == TicketCommentsStatus.serverError
-                  ? 'Retry loading'
+                  ? 'إعادة التحميل'
                   : null,
               onAction:
                   c.status == TicketCommentsStatus.offline ||
@@ -110,7 +110,7 @@ class _TicketCommentsSectionState extends State<TicketCommentsSection> {
               children: [
                 FixFlowTextField(
                   fieldKey: const Key('comment_content'),
-                  label: 'Add a plain-text comment',
+                  label: 'أضف تعليقاً نصياً',
                   controller: text,
                   maxLength: 2000,
                   maxLines: 5,
@@ -119,7 +119,7 @@ class _TicketCommentsSectionState extends State<TicketCommentsSection> {
                 const SizedBox(height: FixFlowSpacing.sm),
                 FixFlowButton(
                   buttonKey: const Key('comment_submit'),
-                  label: c.isSubmitting ? 'Sending…' : 'Add comment',
+                  label: c.isSubmitting ? 'جارٍ الإرسال…' : 'إضافة تعليق',
                   loading: c.isSubmitting,
                   onPressed: c.isSubmitting ? null : c.submit,
                 ),

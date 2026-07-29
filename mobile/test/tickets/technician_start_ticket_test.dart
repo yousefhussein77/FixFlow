@@ -30,7 +30,7 @@ void main() {
     await tester.tap(find.byKey(const Key('start_work')));
     await tester.pumpAndSettle();
     expect(repository.status, isNull);
-    expect(find.text('Start work?'), findsOneWidget);
+    expect(find.text('بدء العمل؟'), findsOneWidget);
     await tester.tap(find.byKey(const Key('confirm_start_work')));
     await tester.pumpAndSettle();
     expect(repository.status, 'in_progress');
@@ -87,7 +87,7 @@ void main() {
       find.byKey(const Key('rejection_reason')),
       'Not safe',
     );
-    await tester.tap(find.text('Reject').last);
+    await tester.tap(find.text('رفض').last);
     await tester.pumpAndSettle();
     expect(repository.status, 'rejected');
   });

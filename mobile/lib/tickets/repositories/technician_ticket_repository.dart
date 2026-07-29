@@ -41,7 +41,7 @@ class TechnicianTicketRepositoryImpl implements TechnicianTicketRepository {
     } catch (_) {
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'The server returned an invalid technician ticket response.',
+        'تعذر معالجة بيانات تذاكر الفني.',
       );
     }
   }

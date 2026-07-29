@@ -14,7 +14,7 @@ class ReferenceApiService {
     if (d is! List)
       throw const AuthFailure(
         AuthFailureKind.contract,
-        'Invalid reference response.',
+        'تعذر معالجة بيانات الخيارات.',
       );
     return d.cast<Map<String, dynamic>>();
   }
@@ -30,7 +30,7 @@ class ReferenceApiService {
     if (d is! Map<String, dynamic>)
       throw const AuthFailure(
         AuthFailureKind.contract,
-        'Invalid reference response.',
+        'تعذر معالجة بيانات الخيارات.',
       );
     return d;
   }
@@ -55,15 +55,19 @@ class ReferenceApiService {
           : method == 'PUT'
           ? await _client.put(u, headers: h, body: jsonEncode(body))
           : await _client.patch(u, headers: h, body: jsonEncode(body));
-      final e = jsonDecode(r.body);
+      final e = jsonDecode(utf8.decode(r.bodyBytes));
       if (e is! Map<String, dynamic>) throw const FormatException();
       if (r.statusCode >= 200 && r.statusCode < 300) return e;
-      final msg = e['message'] as String? ?? 'Request failed.';
+      final msg = _messageForStatus(r.statusCode);
       final raw = e['errors'];
       final errors = <String, List<String>>{};
-      if (raw is Map<String, dynamic>)
-        for (final x in raw.entries)
-          errors[x.key] = (x.value as List).cast<String>();
+      if (raw is Map<String, dynamic>) {
+        for (final x in raw.entries) {
+          if (x.value is List && (x.value as List).isNotEmpty) {
+            errors[x.key] = ['تحقق من القيمة المدخلة.'];
+          }
+        }
+      }
       if (r.statusCode == 401 || r.statusCode == 403)
         throw AuthFailure(AuthFailureKind.unauthenticated, msg);
       if (r.statusCode == 409)
@@ -71,7 +75,9 @@ class ReferenceApiService {
           AuthFailureKind.contract,
           msg,
           fieldErrors: const {
-            'conflict': ['The record changed.'],
+            'conflict': [
+              'تم تعديل السجل من عملية أخرى. حدّث البيانات ثم حاول مجدداً.',
+            ],
           },
         );
       if (r.statusCode == 422)
@@ -82,18 +88,25 @@ class ReferenceApiService {
     } on SocketException {
       throw const AuthFailure(
         AuthFailureKind.offline,
-        'You appear to be offline.',
+        'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
       );
     } on http.ClientException {
       throw const AuthFailure(
         AuthFailureKind.offline,
-        'Unable to reach FixFlow.',
+        'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
       );
     } catch (_) {
       throw const AuthFailure(
         AuthFailureKind.contract,
-        'Invalid reference response.',
+        'تعذر معالجة بيانات الخيارات.',
       );
     }
   }
+
+  String _messageForStatus(int statusCode) => switch (statusCode) {
+    401 || 403 => 'ليست لديك صلاحية لتنفيذ هذا الإجراء.',
+    409 => 'تم تعديل السجل من عملية أخرى. حدّث البيانات ثم حاول مجدداً.',
+    422 => 'تحقق من البيانات المدخلة ثم حاول مجدداً.',
+    _ => 'تعذر تنفيذ الطلب. حاول مجدداً.',
+  };
 }

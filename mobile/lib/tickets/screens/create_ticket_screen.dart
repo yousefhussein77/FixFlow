@@ -69,13 +69,13 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         s.status == TicketCreationStatus.photoValidation ||
         s.status == TicketCreationStatus.validation;
     return FixFlowPage(
-      title: const Text('Create ticket'),
+      title: const Text('إنشاء تذكرة'),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           FixFlowButton(
             buttonKey: const Key('ticket_submit'),
-            label: 'Submit ticket',
+            label: 'إرسال التذكرة',
             loading: c.isSubmitting,
             onPressed: c.isSubmitting
                 ? null
@@ -92,14 +92,14 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
             const LinearProgressIndicator(),
           FixFlowTextField(
             fieldKey: const Key('ticket_title'),
-            label: 'Title',
+            label: 'العنوان',
             controller: title,
             error: s.errors['title']?.firstOrNull,
           ),
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowTextField(
             fieldKey: const Key('ticket_description'),
-            label: 'Description',
+            label: 'الوصف',
             controller: description,
             maxLines: 4,
             maxLength: 2000,
@@ -108,7 +108,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowDropdownField<int>(
             key: const Key('ticket_department'),
-            label: 'Department',
+            label: 'القسم',
             value: c.selectedDepartmentId,
             items: c.departments.map((o) => o.id).toList(),
             itemLabel: (id) => c.departments.firstWhere((o) => o.id == id).name,
@@ -122,7 +122,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowDropdownField<int>(
             key: const Key('ticket_category'),
-            label: 'Category',
+            label: 'الفئة',
             value: c.categories.any((o) => o.id == c.selectedCategoryId)
                 ? c.selectedCategoryId
                 : null,
@@ -134,7 +134,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowDropdownField<String>(
             key: const Key('ticket_priority'),
-            label: 'Priority',
+            label: 'الأولوية',
             value: priority,
             items: const ['low', 'medium', 'high', 'urgent'],
             itemLabel: (value) => value,
@@ -143,7 +143,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowTextField(
             fieldKey: const Key('ticket_location'),
-            label: 'Location',
+            label: 'الموقع',
             controller: location,
             error: s.errors['location']?.firstOrNull,
           ),
@@ -151,7 +151,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
             const SizedBox(height: FixFlowSpacing.sm),
             FixFlowButton(
               buttonKey: const Key('ticket_photos'),
-              label: 'Choose photos (${c.photos.length}/5)',
+              label: 'اختيار الصور (${c.photos.length}/5)',
               variant: FixFlowButtonVariant.outline,
               icon: Icons.photo_library_outlined,
               onPressed: c.isSubmitting

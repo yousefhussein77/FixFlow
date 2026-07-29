@@ -47,7 +47,7 @@ class TicketRatingController extends ChangeNotifier {
     if (isSubmitting) return false;
     if (selectedValue == null || selectedValue! < 1 || selectedValue! > 5) {
       status = TicketRatingStatus.validation;
-      message = 'Choose a rating from 1 to 5.';
+      message = 'اختر تقييماً من 1 إلى 5.';
       notifyListeners();
       return false;
     }

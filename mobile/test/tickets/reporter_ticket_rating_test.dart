@@ -26,7 +26,7 @@ void main() {
     await tester.tap(find.text('5'));
     await tester.tap(find.byKey(const Key('rating_submit')));
     await tester.pumpAndSettle();
-    expect(find.text('Rating: 5/5'), findsOneWidget);
+    expect(find.text('التقييم: 5/5'), findsOneWidget);
     expect(find.textContaining('review'), findsNothing);
   });
 
@@ -57,7 +57,7 @@ void main() {
         ),
       ),
     );
-    expect(find.text('Rating: 4/5'), findsOneWidget);
+    expect(find.text('التقييم: 4/5'), findsOneWidget);
     expect(find.byKey(const Key('rating_submit')), findsNothing);
   });
 
@@ -91,7 +91,7 @@ void main() {
         rating: TicketRating(value: 4, ratedAt: DateTime.utc(2026, 7, 25)),
       ),
     );
-    expect(find.text('Rating: 4/5'), findsOneWidget);
+    expect(find.text('التقييم: 4/5'), findsOneWidget);
   });
 
   testWidgets('rating conflicts preserve their message and request refresh', (

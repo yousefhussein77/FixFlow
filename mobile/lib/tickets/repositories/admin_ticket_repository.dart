@@ -47,7 +47,7 @@ class AdminTicketRepositoryImpl implements AdminTicketRepository {
     } catch (_) {
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'The server returned an invalid administrator ticket response.',
+        'تعذر معالجة بيانات تذاكر المسؤول.',
       );
     }
   }

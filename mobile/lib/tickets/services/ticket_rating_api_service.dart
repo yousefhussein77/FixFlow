@@ -32,8 +32,9 @@ class TicketRatingApiService {
       if (decoded is! Map<String, dynamic>) throw const FormatException();
       if (response.statusCode == 200 || response.statusCode == 201)
         return decoded;
-      final message = decoded['message'] as String? ?? 'Request failed.';
+      if (decoded['message'] is! String) throw const FormatException();
       final code = decoded['code'] as String?;
+      final message = _messageForStatus(response.statusCode, code);
       final errors = <String, List<String>>{};
       if (decoded['errors'] is Map<String, dynamic>) {
         for (final entry
@@ -68,18 +69,34 @@ class TicketRatingApiService {
     } on SocketException {
       throw const TicketFailure(
         TicketFailureKind.offline,
-        'You appear to be offline.',
+        'لا يوجد اتصال بالإنترنت. تحقق من الاتصال وحاول مجدداً.',
       );
     } on http.ClientException {
       throw const TicketFailure(
         TicketFailureKind.offline,
-        'Unable to reach FixFlow.',
+        'تعذر الاتصال بخدمة FixFlow. حاول مجدداً.',
       );
     } catch (_) {
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'The server returned an invalid rating response.',
+        'تعذر معالجة استجابة التقييم.',
       );
     }
+  }
+
+  String _messageForStatus(int statusCode, String? code) {
+    if (statusCode == 409 && code == 'TICKET_NOT_COMPLETED') {
+      return 'يمكن تقييم التذاكر المكتملة فقط.';
+    }
+    if (statusCode == 409 && code == 'RATING_ALREADY_EXISTS') {
+      return 'تم تقييم هذه التذكرة مسبقاً.';
+    }
+    return switch (statusCode) {
+      401 || 403 => 'ليست لديك صلاحية لتقييم هذه التذكرة.',
+      404 => 'التذكرة غير متاحة.',
+      409 => 'لا يمكن حفظ التقييم بسبب حالة التذكرة الحالية.',
+      422 => 'اختر تقييماً صحيحاً من 1 إلى 5.',
+      _ => 'تعذر تنفيذ الطلب. حاول مجدداً.',
+    };
   }
 }

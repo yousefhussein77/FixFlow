@@ -24,7 +24,7 @@ class TicketCommentRepositoryImpl implements TicketCommentRepository {
       await store.read() ??
       (throw const TicketFailure(
         TicketFailureKind.unauthorized,
-        'Authentication required.',
+        'يرجى تسجيل الدخول للمتابعة.',
       ));
   String _path(TicketCommentContext context, String reference) =>
       '/api/${context.pathSegment}/tickets/$reference/comments';
@@ -36,7 +36,7 @@ class TicketCommentRepositoryImpl implements TicketCommentRepository {
     } catch (_) {
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'The server returned an invalid comment response.',
+        'تعذر معالجة بيانات التعليقات.',
       );
     }
   }
@@ -71,7 +71,7 @@ class TicketCommentRepositoryImpl implements TicketCommentRepository {
     if (trimmed.isEmpty || trimmed.length > 2000)
       throw const TicketFailure(
         TicketFailureKind.validation,
-        'Enter a comment from 1 to 2000 characters.',
+        'أدخل تعليقاً من حرف واحد إلى 2000 حرف.',
       );
     final envelope = await api.post(_path(context, reference), await _token(), {
       'content': trimmed,

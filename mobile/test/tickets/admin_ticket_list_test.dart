@@ -32,8 +32,8 @@ void main() {
       MaterialApp(home: AdminTicketListScreen(repository: FakeAdminRepo())),
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('Unassigned'), findsOneWidget);
-    expect(find.text('Assign'), findsOneWidget);
+    expect(find.textContaining('غير مسندة'), findsOneWidget);
+    expect(find.text('إسناد'), findsOneWidget);
     expect(find.text('Delete'), findsNothing);
   });
 
@@ -55,7 +55,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('Unassigned'), findsOneWidget);
+    expect(find.textContaining('غير مسندة'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

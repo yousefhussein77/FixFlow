@@ -31,7 +31,7 @@ class SecureTokenStore implements TokenStore {
     } catch (_) {
       throw const AuthFailure(
         AuthFailureKind.storage,
-        'Secure session storage is unavailable on this device.',
+        'التخزين الآمن للجلسة غير متاح على هذا الجهاز.',
       );
     }
   }

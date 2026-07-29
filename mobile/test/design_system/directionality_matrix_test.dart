@@ -30,8 +30,8 @@ void main() {
         ),
       );
       expect(find.text('TKT-RTL-001'), findsOneWidget);
-      expect(find.text('In progress'), findsOneWidget);
-      expect(find.text('High priority'), findsOneWidget);
+      expect(find.text('قيد التنفيذ'), findsOneWidget);
+      expect(find.text('أولوية عالية'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }

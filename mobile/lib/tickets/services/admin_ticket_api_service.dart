@@ -38,7 +38,7 @@ class AdminTicketApiService {
       if (decoded is! Map<String, dynamic>) throw const FormatException();
       if (materialized.statusCode >= 200 && materialized.statusCode < 300)
         return decoded;
-      final message = decoded['message'] as String? ?? 'Request failed.';
+      final message = _messageForStatus(materialized.statusCode);
       final raw = decoded['errors'];
       final errors = <String, List<String>>{};
       if (raw is Map<String, dynamic>) {
@@ -63,18 +63,26 @@ class AdminTicketApiService {
     } on SocketException {
       throw const TicketFailure(
         TicketFailureKind.offline,
-        'You appear to be offline.',
+        'لا يوجد اتصال بالإنترنت. تحقق من الاتصال وحاول مجدداً.',
       );
     } on http.ClientException {
       throw const TicketFailure(
         TicketFailureKind.offline,
-        'Unable to reach FixFlow.',
+        'تعذر الاتصال بخدمة FixFlow. حاول مجدداً.',
       );
     } catch (_) {
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'The server returned an invalid administrator ticket response.',
+        'تعذر معالجة استجابة تذاكر المسؤول.',
       );
     }
   }
+
+  String _messageForStatus(int statusCode) => switch (statusCode) {
+    401 || 403 => 'ليست لديك صلاحية لتنفيذ هذا الإجراء.',
+    404 => 'العنصر المطلوب غير متاح.',
+    409 => 'تعارضت البيانات مع الحالة الحالية. حدّث الصفحة ثم حاول مجدداً.',
+    422 => 'تحقق من البيانات المدخلة ثم حاول مجدداً.',
+    _ => 'تعذر تنفيذ الطلب. حاول مجدداً.',
+  };
 }

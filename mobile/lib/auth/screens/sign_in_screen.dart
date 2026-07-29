@@ -31,6 +31,15 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant SignInScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_changed);
+      widget.controller.addListener(_changed);
+    }
+  }
+
+  @override
   void dispose() {
     widget.controller.removeListener(_changed);
     _email.dispose();
@@ -47,25 +56,27 @@ class _SignInScreenState extends State<SignInScreen> {
     final state = widget.controller.state;
     final loading = state.status == AuthViewStatus.loading;
     return FixFlowAuthPage(
-      title: 'Sign in to FixFlow',
-      subtitle: 'Manage maintenance requests with confidence.',
+      title: 'تسجيل الدخول إلى FixFlow',
+      subtitle: 'أدر طلبات الصيانة بثقة وسهولة.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           FixFlowTextField(
             fieldKey: const Key('login_email'),
-            label: 'Email',
+            label: 'البريد الإلكتروني',
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             error: state.fieldErrors['email']?.firstOrNull,
+            onChanged: (_) => widget.controller.clearFieldError('email'),
           ),
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowTextField(
             fieldKey: const Key('login_password'),
-            label: 'Password',
+            label: 'كلمة المرور',
             controller: _password,
             obscureText: true,
             error: state.fieldErrors['password']?.firstOrNull,
+            onChanged: (_) => widget.controller.clearFieldError('password'),
           ),
           if (state.message != null) ...[
             const SizedBox(height: FixFlowSpacing.sm),
@@ -78,7 +89,7 @@ class _SignInScreenState extends State<SignInScreen> {
           const SizedBox(height: FixFlowSpacing.md),
           FixFlowButton(
             buttonKey: const Key('login_submit'),
-            label: 'Sign in',
+            label: 'تسجيل الدخول',
             loading: loading,
             onPressed: loading
                 ? null
@@ -88,7 +99,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
           ),
           FixFlowButton(
-            label: 'Create a reporter account',
+            label: 'إنشاء حساب مُبلّغ',
             variant: FixFlowButtonVariant.text,
             onPressed: loading ? null : widget.onShowRegister,
           ),

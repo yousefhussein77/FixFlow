@@ -57,8 +57,127 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: SessionGate(controller: controller)),
     );
-    expect(find.text('Offline.'), findsOneWidget);
+    expect(
+      find.text('تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.'),
+      findsOneWidget,
+    );
+    expect(find.text('Offline.'), findsNothing);
     expect(find.byKey(const Key('session_retry')), findsOneWidget);
+  });
+
+  testWidgets('failed sign in keeps fields editable and clears its error', (
+    tester,
+  ) async {
+    final controller = AuthController(
+      RestoreRepository(
+        failure: const AuthFailure(
+          AuthFailureKind.unauthenticated,
+          'بيانات الدخول غير صحيحة أو انتهت الجلسة.',
+          fieldErrors: {
+            'email': ['تحقق من عنوان البريد الإلكتروني.'],
+            'password': ['تحقق من كلمة المرور.'],
+          },
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: SignInScreen(controller: controller)),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('login_email')),
+      'invalid-email',
+    );
+    await tester.enterText(find.byKey(const Key('login_password')), 'bad');
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('login_submit')),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('login_submit')));
+    await tester.pumpAndSettle();
+
+    final emailBeforeEdit = tester.widget<TextField>(
+      find.byKey(const Key('login_email')),
+    );
+    final passwordBeforeEdit = tester.widget<TextField>(
+      find.byKey(const Key('login_password')),
+    );
+    expect(emailBeforeEdit.enabled, isTrue);
+    expect(emailBeforeEdit.readOnly, isFalse);
+    expect(passwordBeforeEdit.enabled, isTrue);
+    expect(passwordBeforeEdit.readOnly, isFalse);
+    expect(emailBeforeEdit.decoration?.errorText, isNotNull);
+    expect(passwordBeforeEdit.decoration?.errorText, isNotNull);
+
+    await tester.enterText(
+      find.byKey(const Key('login_email')),
+      'reporter@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const Key('login_password')),
+      'Password1234',
+    );
+    await tester.pump();
+
+    final emailAfterEdit = tester.widget<TextField>(
+      find.byKey(const Key('login_email')),
+    );
+    final passwordAfterEdit = tester.widget<TextField>(
+      find.byKey(const Key('login_password')),
+    );
+    expect(emailAfterEdit.controller?.text, 'reporter@example.com');
+    expect(passwordAfterEdit.controller?.text, 'Password1234');
+    expect(emailAfterEdit.decoration?.errorText, isNull);
+    expect(passwordAfterEdit.decoration?.errorText, isNull);
+    expect(find.byKey(const Key('login_error')), findsNothing);
+  });
+
+  testWidgets('server failure during sign in does not replace the form', (
+    tester,
+  ) async {
+    final controller = AuthController(
+      RestoreRepository(
+        failure: const AuthFailure(
+          AuthFailureKind.server,
+          'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: SessionGate(controller: controller)),
+    );
+    await tester.enterText(
+      find.byKey(const Key('login_email')),
+      'reporter@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const Key('login_password')),
+      'Password1234',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('login_submit')),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('login_submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SignInScreen), findsOneWidget);
+    expect(find.byKey(const Key('session_retry')), findsNothing);
+    await tester.enterText(
+      find.byKey(const Key('login_email')),
+      'updated@example.com',
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('login_email')))
+          .controller
+          ?.text,
+      'updated@example.com',
+    );
+    expect(find.byKey(const Key('login_error')), findsNothing);
   });
 
   for (final brightness in Brightness.values) {
@@ -90,14 +209,14 @@ void main() {
             'Password1234',
           );
           await tester.scrollUntilVisible(
-            find.byTooltip('Show password'),
+            find.byTooltip('إظهار كلمة المرور'),
             150,
             scrollable: find.byType(Scrollable).first,
           );
-          await tester.tap(find.byTooltip('Show password'));
+          await tester.tap(find.byTooltip('إظهار كلمة المرور'));
           await tester.pump();
           expect(find.text('Password1234'), findsOneWidget);
-          expect(find.text('FixFlow'), findsOneWidget);
+          expect(find.bySemanticsLabel('FixFlow'), findsOneWidget);
           expect(tester.takeException(), isNull);
         },
       );

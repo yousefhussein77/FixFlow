@@ -57,7 +57,7 @@ class TicketDetailsController extends ChangeNotifier {
       TicketDetailsState(
         TicketDetailsStatus.photoUnavailable,
         ticket: ticket,
-        message: 'A photo is temporarily unavailable.',
+        message: 'الصورة غير متاحة مؤقتاً.',
       ),
     );
   }

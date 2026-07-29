@@ -41,26 +41,26 @@ class _CategoryScreenState extends State<CategoryScreen> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(value == null ? 'Create category' : 'Edit category'),
+        title: Text(value == null ? 'إنشاء فئة' : 'تعديل الفئة'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             FixFlowTextField(
-              label: 'Department ID',
+              label: 'معرّف القسم',
               controller: department,
               keyboardType: TextInputType.number,
             ),
-            FixFlowTextField(label: 'Name', controller: name),
+            FixFlowTextField(label: 'الاسم', controller: name),
           ],
         ),
         actions: [
           FixFlowButton(
-            label: 'Cancel',
+            label: 'إلغاء',
             variant: FixFlowButtonVariant.text,
             onPressed: () => Navigator.pop(dialogContext),
           ),
           FixFlowButton(
-            label: 'Save',
+            label: 'حفظ',
             onPressed: () {
               final departmentId = int.tryParse(department.text);
               if (departmentId == null) return;
@@ -92,21 +92,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
   Widget build(BuildContext context) {
     final s = widget.controller.state;
     return FixFlowPage(
-      title: const Text('Categories'),
+      title: const Text('الفئات'),
       floatingActionButton: FixFlowFloatingButton(
         key: const Key('category_add'),
         icon: Icons.add,
-        label: 'Add category',
+        label: 'إضافة فئة',
         onPressed: () => _edit(),
       ),
       body: switch (s.status) {
         model.ReferenceStatus.loading => const FixFlowStateView(
           kind: FixFlowStateKind.loading,
-          title: 'Loading categories',
+          title: 'جارٍ تحميل الفئات',
         ),
         model.ReferenceStatus.empty => const FixFlowStateView(
           kind: FixFlowStateKind.empty,
-          title: 'No categories yet.',
+          title: 'لا توجد فئات بعد.',
         ),
         model.ReferenceStatus.unauthorized ||
         model.ReferenceStatus.offline ||
@@ -114,9 +114,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
         model.ReferenceStatus.validation ||
         model.ReferenceStatus.serverError => FixFlowStateView(
           kind: _stateKind(s.status),
-          title: 'Unable to load categories',
+          title: 'تعذر تحميل الفئات',
           message: s.message,
-          actionLabel: 'Retry',
+          actionLabel: 'إعادة المحاولة',
           onAction: widget.controller.loadCategories,
         ),
         _ => Column(
