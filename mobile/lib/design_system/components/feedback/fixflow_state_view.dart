@@ -39,7 +39,16 @@ class FixFlowStateView extends StatelessWidget {
       return Semantics(
         liveRegion: true,
         label: title,
-        child: const Center(child: CircularProgressIndicator()),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: FixFlowSpacing.sm),
+              Text(title, textAlign: TextAlign.center),
+            ],
+          ),
+        ),
       );
     }
     if (kind == FixFlowStateKind.skeleton) {
@@ -123,18 +132,23 @@ class _Skeleton extends StatelessWidget {
   const _Skeleton({required this.color});
   final Color color;
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      for (final width in const [double.infinity, 220.0, 160.0])
-        Container(
-          width: width,
-          height: 18,
-          margin: const EdgeInsets.only(bottom: FixFlowSpacing.xs),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(FixFlowRadius.small),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final factor in const [1.0, .72, .52])
+          FractionallySizedBox(
+            widthFactor: factor,
+            child: Container(
+              height: 18,
+              margin: const EdgeInsets.only(bottom: FixFlowSpacing.xs),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(FixFlowRadius.small),
+              ),
+            ),
           ),
-        ),
-    ],
+      ],
+    ),
   );
 }

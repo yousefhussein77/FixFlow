@@ -137,7 +137,13 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
             label: 'الأولوية',
             value: priority,
             items: const ['low', 'medium', 'high', 'urgent'],
-            itemLabel: (value) => value,
+            itemLabel: (value) => switch (value) {
+              'low' => 'منخفضة',
+              'medium' => 'متوسطة',
+              'high' => 'عالية',
+              'urgent' => 'عاجلة',
+              _ => value,
+            },
             onChanged: (v) => setState(() => priority = v ?? priority),
           ),
           const SizedBox(height: FixFlowSpacing.sm),
@@ -178,16 +184,16 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               child: FixFlowStateView(
                 kind: _stateKind(s.status),
                 title: s.status == TicketCreationStatus.success
-                    ? 'Ticket created'
+                    ? 'تم إنشاء التذكرة'
                     : s.status == TicketCreationStatus.validation
-                    ? 'Check the ticket details'
+                    ? 'تحقق من بيانات التذكرة'
                     : s.status == TicketCreationStatus.photoValidation
-                    ? 'Photo selection needs attention'
-                    : 'Ticket submission needs attention',
+                    ? 'تحقق من الصور المحددة'
+                    : 'تعذر إرسال التذكرة',
                 message:
                     s.message ??
                     (s.status == TicketCreationStatus.success
-                        ? 'Created ${s.ticket!.reference}'
+                        ? 'تم إنشاء التذكرة ${s.ticket!.reference}'
                         : null),
               ),
             ),

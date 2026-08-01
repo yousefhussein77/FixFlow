@@ -21,14 +21,14 @@ class TechnicianTicketRepositoryImpl implements TechnicianTicketRepository {
       await store.read() ??
       (throw const TicketFailure(
         TicketFailureKind.unauthorized,
-        'Authentication required.',
+        'يجب تسجيل الدخول للمتابعة.',
       ));
   Map<String, dynamic> _data(Map<String, dynamic> value) {
     final data = value['data'];
     if (data is! Map<String, dynamic>)
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'Invalid ticket response.',
+        'تعذر معالجة بيانات التذكرة.',
       );
     return data;
   }
@@ -56,7 +56,7 @@ class TechnicianTicketRepositoryImpl implements TechnicianTicketRepository {
     if (data is! List || meta is! Map<String, dynamic>)
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'Invalid ticket page.',
+        'تعذر معالجة صفحة التذاكر.',
       );
     return _parse(
       () => TechnicianTicketPage(
@@ -89,14 +89,14 @@ class TechnicianTicketRepositoryImpl implements TechnicianTicketRepository {
     if (!const {'in_progress', 'completed', 'rejected'}.contains(status))
       throw const TicketFailure(
         TicketFailureKind.validation,
-        'Unsupported status.',
+        'حالة التذكرة المطلوبة غير مدعومة.',
       );
     final trimmed = reason?.trim();
     if (status == 'rejected' &&
         (trimmed == null || trimmed.isEmpty || trimmed.length > 1000))
       throw const TicketFailure(
         TicketFailureKind.validation,
-        'A rejection reason is required.',
+        'سبب الرفض مطلوب.',
       );
     final envelope = await api.patch(
       '/api/technician/tickets/$reference/status',

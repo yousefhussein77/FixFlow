@@ -32,7 +32,7 @@ class ReferenceRepositoryImpl implements ReferenceRepository {
     if (t == null)
       throw const AuthFailure(
         AuthFailureKind.unauthenticated,
-        'Authentication required.',
+        'يجب تسجيل الدخول للمتابعة.',
       );
     return t;
   }

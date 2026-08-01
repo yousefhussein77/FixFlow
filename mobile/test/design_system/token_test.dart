@@ -36,9 +36,9 @@ void main() {
   test('typography provides readable Arabic and Latin scale metrics', () {
     final theme = FixFlowTypography.textTheme(Colors.black);
     expect(theme.displaySmall!.fontSize, 32);
-    expect(theme.bodyLarge!.fontSize, 16);
+    expect(theme.bodyLarge!.fontSize, 14);
     expect(theme.bodySmall!.fontSize, 12);
-    expect(theme.bodyLarge!.height, 1.5);
+    expect(theme.bodyLarge!.height, 1.6);
     expect(theme.labelLarge!.fontWeight, FontWeight.w600);
   });
 }

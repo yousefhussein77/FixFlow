@@ -160,7 +160,9 @@ class _TicketDetailsBody extends StatelessWidget {
       Text('السجل', style: Theme.of(context).textTheme.titleMedium),
       for (final item in ticket.history)
         FixFlowHistoryItem(
-          title: '${item.fromStatus} → ${item.toStatus}',
+          title:
+              '${fixFlowStatusLabel(context, item.fromStatus)} → '
+              '${fixFlowStatusLabel(context, item.toStatus)}',
           details: [
             if (item.reason != null) item.reason!,
             'المنفذ: ${item.actor.name}',

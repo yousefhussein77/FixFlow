@@ -16,17 +16,25 @@ class FixFlowSurface extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    label: semanticLabel,
-    button: onTap != null,
-    child: Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(padding: padding, child: child),
+  Widget build(BuildContext context) {
+    final content = Padding(padding: padding, child: child);
+    return Semantics(
+      label: semanticLabel,
+      button: onTap != null,
+      enabled: onTap != null,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: onTap == null
+            ? content
+            : InkWell(
+                onTap: onTap,
+                mouseCursor: SystemMouseCursors.click,
+                canRequestFocus: true,
+                child: content,
+              ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class FixFlowMetadataRow extends StatelessWidget {

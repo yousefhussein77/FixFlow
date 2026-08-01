@@ -19,7 +19,7 @@ class TicketRepositoryImpl implements TicketRepository {
     if (value == null)
       throw const TicketFailure(
         TicketFailureKind.unauthorized,
-        'Authentication required.',
+        'يجب تسجيل الدخول للمتابعة.',
       );
     return value;
   }
@@ -29,7 +29,7 @@ class TicketRepositoryImpl implements TicketRepository {
     if (data is! List)
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'Invalid list response.',
+        'تعذر معالجة قائمة التذاكر.',
       );
     return data.cast<Map<String, dynamic>>();
   }
@@ -39,7 +39,7 @@ class TicketRepositoryImpl implements TicketRepository {
     if (data is! Map<String, dynamic>)
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'Invalid ticket response.',
+        'تعذر معالجة بيانات التذكرة.',
       );
     return data;
   }
@@ -72,7 +72,7 @@ class TicketRepositoryImpl implements TicketRepository {
     if (meta is! Map<String, dynamic>)
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'Invalid pagination response.',
+        'تعذر معالجة صفحات التذاكر.',
       );
     return TicketPage(
       _dataList(e).map(TicketSummary.fromJson).toList(),

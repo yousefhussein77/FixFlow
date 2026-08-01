@@ -17,14 +17,14 @@ class AdminTicketRepositoryImpl implements AdminTicketRepository {
       await store.read() ??
       (throw const TicketFailure(
         TicketFailureKind.unauthorized,
-        'Authentication required.',
+        'يجب تسجيل الدخول للمتابعة.',
       ));
   List<Map<String, dynamic>> _list(Map<String, dynamic> envelope) {
     final data = envelope['data'];
     if (data is! List)
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'Invalid list response.',
+        'تعذر معالجة قائمة التذاكر.',
       );
     return data.cast<Map<String, dynamic>>();
   }
@@ -34,7 +34,7 @@ class AdminTicketRepositoryImpl implements AdminTicketRepository {
     if (data is! Map<String, dynamic>)
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'Invalid ticket response.',
+        'تعذر معالجة بيانات التذكرة.',
       );
     return data;
   }
@@ -62,7 +62,7 @@ class AdminTicketRepositoryImpl implements AdminTicketRepository {
     if (meta is! Map<String, dynamic>)
       throw const TicketFailure(
         TicketFailureKind.contract,
-        'Invalid pagination response.',
+        'تعذر معالجة صفحات التذاكر.',
       );
     return _parse(
       () => AdminTicketPage(

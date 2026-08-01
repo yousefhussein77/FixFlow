@@ -14,14 +14,19 @@ abstract final class FixFlowColors {
   static const lightDisabledSurface = Color(0xFFE5E7EB);
   static const lightDisabledContent = Color(0xFF6B7280);
 
-  static const darkBackground = Color(0xFF0B1220);
-  static const darkSurface = Color(0xFF111827);
-  static const darkRaisedSurface = Color(0xFF1F2937);
+  static const darkBackground = Color(0xFF080808);
+  static const darkSurface = Color(0xFF121212);
+  static const darkRaisedSurface = Color(0xFF1C1C1C);
   static const darkText = Color(0xFFF9FAFB);
   static const darkSupporting = Color(0xFFD1D5DB);
   static const darkBorder = Color(0xFF4B5563);
   static const darkDisabledSurface = Color(0xFF374151);
   static const darkDisabledContent = Color(0xFF9CA3AF);
+
+  static const lightHover = Color(0xFFE8EEFF);
+  static const lightPressed = Color(0xFFDCE5FF);
+  static const darkHover = Color(0xFF202A44);
+  static const darkPressed = Color(0xFF29375C);
 
   static const lightInformation = Color(0xFF1D4ED8);
   static const lightWarning = Color(0xFFB45309);

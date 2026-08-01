@@ -5,10 +5,12 @@ import '../../auth/state/auth_controller.dart';
 import '../../design_system/brand/fixflow_logo.dart';
 import '../../design_system/components/content/fixflow_surfaces.dart';
 import '../../design_system/components/feedback/fixflow_state_view.dart';
+import '../../design_system/components/navigation/fixflow_navigation.dart';
 import '../../design_system/components/tickets/fixflow_ticket_badges.dart';
 import '../../design_system/layout/responsive_constraints.dart';
 import '../../design_system/theme/fixflow_colors.dart';
 import '../../design_system/theme/fixflow_theme_controller.dart';
+import '../../design_system/tokens/fixflow_motion.dart';
 import '../../design_system/tokens/fixflow_spacing.dart';
 import '../../reference_data/screens/category_screen.dart';
 import '../../reference_data/screens/department_screen.dart';
@@ -43,6 +45,8 @@ class AdministratorDashboardScreen extends StatefulWidget {
 class _AdministratorDashboardScreenState
     extends State<AdministratorDashboardScreen> {
   late final AdminTicketListController controller;
+  late final PageController _pageController;
+  late final List<GlobalKey<NavigatorState>> _navigatorKeys;
   int _selectedDestination = 0;
 
   @override
@@ -51,12 +55,15 @@ class _AdministratorDashboardScreenState
     controller = AdminTicketListController(widget.repository)
       ..addListener(_changed)
       ..load();
+    _pageController = PageController();
+    _navigatorKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
   }
 
   @override
   void dispose() {
     controller.removeListener(_changed);
     controller.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -64,28 +71,56 @@ class _AdministratorDashboardScreenState
     if (mounted) setState(() {});
   }
 
-  void _open(Widget page) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  Future<void> _select(int index) async {
+    if (index > 1 && widget.referenceController == null) return;
+    if (index == _selectedDestination) {
+      _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+      return;
+    }
+    setState(() => _selectedDestination = index);
+    await _pageController.animateToPage(
+      index,
+      duration: FixFlowMotion.standard,
+      curve: Curves.easeOutCubic,
+    );
   }
 
-  void _select(int index) {
-    setState(() => _selectedDestination = index);
-    if (index == 0) return;
-    if (index == 1) {
-      _open(
-        AdminTicketListScreen(
-          repository: widget.repository,
-          commentRepository: widget.commentRepository,
+  Widget _destination(int index, UserProfile? profile) => switch (index) {
+    0 => SafeArea(
+      child: SingleChildScrollView(
+        key: const PageStorageKey('administrator_dashboard_scroll'),
+        padding: const EdgeInsets.all(FixFlowSpacing.lg),
+        child: FixFlowConstrainedContent(
+          maxWidth: 1120,
+          child: _DashboardContent(
+            profile: profile,
+            controller: controller,
+            onRefresh: controller.load,
+            onAllTickets: () => _select(1),
+            onDepartments: () => _select(2),
+            onCategories: () => _select(3),
+            onTeam: _showTechnicians,
+            onSignOut: widget.authController.logout,
+            themeController: widget.themeController,
+            showThemeControl: MediaQuery.sizeOf(context).width >= 900,
+            showAccountControl: MediaQuery.sizeOf(context).width >= 900,
+          ),
         ),
-      );
-    }
-    if (index == 2 && widget.referenceController != null) {
-      _open(DepartmentScreen(controller: widget.referenceController!));
-    }
-    if (index == 3 && widget.referenceController != null) {
-      _open(CategoryScreen(controller: widget.referenceController!));
-    }
-  }
+      ),
+    ),
+    1 => AdminTicketListScreen(
+      repository: widget.repository,
+      commentRepository: widget.commentRepository,
+    ),
+    2 =>
+      widget.referenceController == null
+          ? const _UnavailableDestination()
+          : DepartmentScreen(controller: widget.referenceController!),
+    _ =>
+      widget.referenceController == null
+          ? const _UnavailableDestination()
+          : CategoryScreen(controller: widget.referenceController!),
+  };
 
   Future<void> _showTechnicians() async {
     showDialog<void>(
@@ -108,7 +143,7 @@ class _AdministratorDashboardScreenState
             if (technicians.isEmpty)
               return const Text('لم يتم العثور على فنيين.');
             return SizedBox(
-              width: 360,
+              width: (MediaQuery.sizeOf(context).width - 64).clamp(240, 360),
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: technicians.length,
@@ -162,104 +197,87 @@ class _AdministratorDashboardScreenState
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 900;
-        final dark = Theme.of(context).brightness == Brightness.dark;
-        final dashboardTheme = Theme.of(context).copyWith(
-          scaffoldBackgroundColor: dark
-              ? const Color(0xFF000000)
-              : const Color(0xFFF8FAFC),
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-            surface: dark ? const Color(0xFF0A0A0A) : Colors.white,
-            surfaceContainerHighest: dark
-                ? const Color(0xFF171717)
-                : const Color(0xFFF1F5F9),
-          ),
-        );
-        return Theme(
-          data: dashboardTheme,
-          child: Scaffold(
-            appBar: wide
-                ? null
-                : AppBar(
-                    titleSpacing: 8,
-                    title: Row(
-                      children: [
-                        const FixFlowBitmapLogo.mark(size: 48),
-                        const SizedBox(width: 8),
-                        Flexible(child: Text('لوحة تحكم المسؤول')),
-                      ],
-                    ),
-                    actions: [
-                      if (widget.themeController != null)
-                        _ThemeToggle(controller: widget.themeController!),
-                      IconButton(
-                        tooltip: 'تحديث لوحة التحكم',
-                        onPressed: controller.load,
-                        icon: const Icon(Icons.refresh),
-                      ),
-                      if (profile != null)
-                        PopupMenuButton<String>(
-                          tooltip: 'قائمة الحساب',
-                          itemBuilder: (_) => [
-                            PopupMenuItem<String>(
-                              enabled: false,
-                              child: Text(profile.name),
-                            ),
-                            const PopupMenuItem<String>(
-                              value: 'signout',
-                              child: Text('تسجيل الخروج'),
-                            ),
-                          ],
-                          onSelected: (value) {
-                            if (value == 'signout') _confirmSignOut();
-                          },
-                        ),
+        return Scaffold(
+          appBar: wide || _selectedDestination != 0
+              ? null
+              : AppBar(
+                  titleSpacing: 8,
+                  title: Row(
+                    children: [
+                      const FixFlowBitmapLogo.mark(size: 48),
+                      const SizedBox(width: 8),
+                      Flexible(child: Text('لوحة تحكم المسؤول')),
                     ],
                   ),
-            drawer: wide
-                ? null
-                : _DashboardDrawer(
-                    onSelect: _select,
-                    onSignOut: _confirmSignOut,
-                  ),
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (wide)
-                  _DashboardSidebar(
-                    onSelect: _select,
-                    onSignOut: _confirmSignOut,
-                  ),
-                Expanded(
-                  child: SafeArea(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(FixFlowSpacing.lg),
-                      child: FixFlowConstrainedContent(
-                        child: _DashboardContent(
-                          profile: profile,
-                          controller: controller,
-                          onRefresh: controller.load,
-                          onAllTickets: () => _select(1),
-                          onDepartments: () => _select(2),
-                          onCategories: () => _select(3),
-                          onTeam: _showTechnicians,
-                          onSignOut: widget.authController.logout,
-                          themeController: widget.themeController,
-                          showThemeControl: wide,
-                          showAccountControl: wide,
-                        ),
+                  actions: [
+                    if (widget.themeController != null)
+                      _ThemeToggle(controller: widget.themeController!),
+                    IconButton(
+                      tooltip: 'تحديث لوحة التحكم',
+                      onPressed: controller.load,
+                      icon: const Icon(Icons.refresh),
+                    ),
+                    if (profile != null)
+                      PopupMenuButton<String>(
+                        tooltip: 'قائمة الحساب',
+                        itemBuilder: (_) => [
+                          PopupMenuItem<String>(
+                            enabled: false,
+                            child: Text(profile.name),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'signout',
+                            child: Text('تسجيل الخروج'),
+                          ),
+                        ],
+                        onSelected: (value) {
+                          if (value == 'signout') _confirmSignOut();
+                        },
+                      ),
+                  ],
+                ),
+          drawer: wide || _selectedDestination != 0
+              ? null
+              : _DashboardDrawer(
+                  selected: _selectedDestination,
+                  onSelect: _select,
+                  onSignOut: _confirmSignOut,
+                ),
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (wide)
+                _DashboardSidebar(
+                  selected: _selectedDestination,
+                  onSelect: _select,
+                  onSignOut: _confirmSignOut,
+                ),
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  itemBuilder: (context, index) => MediaQuery.removePadding(
+                    context: context,
+                    removeBottom: true,
+                    child: Navigator(
+                      key: _navigatorKeys[index],
+                      onGenerateRoute: (_) => MaterialPageRoute<void>(
+                        builder: (_) => _destination(index, profile),
+                        settings: RouteSettings(name: '/administrator/$index'),
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
-            bottomNavigationBar: wide
-                ? null
-                : _DashboardBottomNavigation(
-                    selected: _selectedDestination,
-                    onSelect: _select,
-                  ),
+              ),
+            ],
           ),
+          bottomNavigationBar: wide
+              ? null
+              : _DashboardBottomNavigation(
+                  selected: _selectedDestination,
+                  onSelect: _select,
+                ),
         );
       },
     );
@@ -310,6 +328,7 @@ class _DashboardContent extends StatelessWidget {
         children: [
           _Header(
             profile: profile,
+            onRefresh: onRefresh,
             onSignOut: onSignOut,
             themeController: themeController,
             showThemeControl: showThemeControl,
@@ -344,15 +363,14 @@ class _DashboardContent extends StatelessWidget {
       children: [
         _Header(
           profile: profile,
+          onRefresh: onRefresh,
           onSignOut: onSignOut,
           themeController: themeController,
           showThemeControl: showThemeControl,
           showAccountControl: showAccountControl,
         ),
         const SizedBox(height: FixFlowSpacing.lg),
-        Wrap(
-          spacing: FixFlowSpacing.sm,
-          runSpacing: FixFlowSpacing.sm,
+        _MetricGrid(
           children: [
             _MetricCard(
               label: 'إجمالي التذاكر',
@@ -369,7 +387,7 @@ class _DashboardContent extends StatelessWidget {
               label: 'قيد التنفيذ',
               value: inProgress,
               icon: Icons.handyman_outlined,
-              color: Colors.deepPurple,
+              color: FixFlowColors.brandSecondary,
             ),
             _MetricCard(
               label: 'مكتملة',
@@ -444,12 +462,14 @@ class _DashboardContent extends StatelessWidget {
 class _Header extends StatelessWidget {
   const _Header({
     required this.profile,
+    required this.onRefresh,
     required this.onSignOut,
     this.themeController,
     this.showThemeControl = true,
     this.showAccountControl = true,
   });
   final UserProfile? profile;
+  final VoidCallback onRefresh;
   final VoidCallback onSignOut;
   final ThemeController? themeController;
   final bool showThemeControl;
@@ -487,7 +507,7 @@ class _Header extends StatelessWidget {
         children: [
           Text('مرحباً بعودتك', key: Key('dashboard_welcome')),
           SizedBox(height: 4),
-          Text('لوحة تحكم المسؤول'),
+          Text('إليك ملخص أعمال الصيانة الحالية'),
         ],
       );
       if (constraints.maxWidth < 500) {
@@ -508,6 +528,11 @@ class _Header extends StatelessWidget {
           Expanded(child: heading),
           if (showThemeControl && themeController != null)
             _ThemeToggle(controller: themeController!),
+          IconButton(
+            tooltip: 'تحديث لوحة التحكم',
+            onPressed: onRefresh,
+            icon: const Icon(Icons.refresh),
+          ),
           if (showAccountControl && account != null) account,
         ],
       );
@@ -527,33 +552,52 @@ class _MetricCard extends StatelessWidget {
   final IconData icon;
   final Color? color;
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 220,
-    child: FixFlowSurface(
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: (color ?? Theme.of(context).colorScheme.primary)
-                .withValues(alpha: .12),
-            foregroundColor: color ?? Theme.of(context).colorScheme.primary,
-            child: Icon(icon),
+  Widget build(BuildContext context) => FixFlowSurface(
+    child: Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: (color ?? Theme.of(context).colorScheme.primary)
+              .withValues(alpha: .12),
+          foregroundColor: color ?? Theme.of(context).colorScheme.primary,
+          child: Icon(icon),
+        ),
+        const SizedBox(width: FixFlowSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('$value', style: Theme.of(context).textTheme.headlineMedium),
+              Text(label),
+            ],
           ),
-          const SizedBox(width: FixFlowSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$value',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                Text(label),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     ),
+  );
+}
+
+class _MetricGrid extends StatelessWidget {
+  const _MetricGrid({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final columns = constraints.maxWidth >= 960
+          ? 4
+          : constraints.maxWidth >= 360
+          ? 2
+          : 1;
+      final width =
+          (constraints.maxWidth - FixFlowSpacing.sm * (columns - 1)) / columns;
+      return Wrap(
+        spacing: FixFlowSpacing.sm,
+        runSpacing: FixFlowSpacing.sm,
+        children: [
+          for (final child in children) SizedBox(width: width, child: child),
+        ],
+      );
+    },
   );
 }
 
@@ -622,7 +666,12 @@ class _RecentTicket extends StatelessWidget {
 }
 
 class _DashboardSidebar extends StatelessWidget {
-  const _DashboardSidebar({required this.onSelect, required this.onSignOut});
+  const _DashboardSidebar({
+    required this.selected,
+    required this.onSelect,
+    required this.onSignOut,
+  });
+  final int selected;
   final ValueChanged<int> onSelect;
   final VoidCallback onSignOut;
   @override
@@ -641,7 +690,7 @@ class _DashboardSidebar extends StatelessWidget {
           ),
           Expanded(
             child: NavigationRail(
-              selectedIndex: 0,
+              selectedIndex: selected,
               onDestinationSelected: onSelect,
               labelType: NavigationRailLabelType.all,
               destinations: const [
@@ -679,56 +728,82 @@ class _DashboardSidebar extends StatelessWidget {
 }
 
 class _DashboardDrawer extends StatelessWidget {
-  const _DashboardDrawer({required this.onSelect, required this.onSignOut});
+  const _DashboardDrawer({
+    required this.selected,
+    required this.onSelect,
+    required this.onSignOut,
+  });
+  final int selected;
   final ValueChanged<int> onSelect;
   final VoidCallback onSignOut;
   @override
   Widget build(BuildContext context) => Drawer(
-    child: ListView(
-      children: [
-        const DrawerHeader(child: FixFlowBitmapLogo.mark(size: 120)),
-        ListTile(
-          leading: const Icon(Icons.dashboard),
-          title: const Text('لوحة التحكم'),
-          onTap: () {
-            Navigator.pop(context);
-            onSelect(0);
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.inbox_outlined),
-          title: const Text('كل التذاكر'),
-          onTap: () {
-            Navigator.pop(context);
-            onSelect(1);
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.apartment_outlined),
-          title: const Text('الأقسام'),
-          onTap: () {
-            Navigator.pop(context);
-            onSelect(2);
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.category_outlined),
-          title: const Text('الفئات'),
-          onTap: () {
-            Navigator.pop(context);
-            onSelect(3);
-          },
-        ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.logout),
-          title: const Text('تسجيل الخروج'),
-          onTap: () {
-            Navigator.pop(context);
-            onSignOut();
-          },
-        ),
-      ],
+    width: (MediaQuery.sizeOf(context).width * .84).clamp(248, 304),
+    child: SafeArea(
+      child: ListView(
+        children: [
+          const DrawerHeader(child: FixFlowBitmapLogo.mark(size: 120)),
+          ListTile(
+            selected: selected == 0,
+            leading: const Icon(Icons.dashboard),
+            title: const Text('لوحة التحكم'),
+            onTap: () {
+              Navigator.pop(context);
+              onSelect(0);
+            },
+          ),
+          ListTile(
+            selected: selected == 1,
+            leading: const Icon(Icons.inbox_outlined),
+            title: const Text('كل التذاكر'),
+            onTap: () {
+              Navigator.pop(context);
+              onSelect(1);
+            },
+          ),
+          ListTile(
+            selected: selected == 2,
+            leading: const Icon(Icons.apartment_outlined),
+            title: const Text('الأقسام'),
+            onTap: () {
+              Navigator.pop(context);
+              onSelect(2);
+            },
+          ),
+          ListTile(
+            selected: selected == 3,
+            leading: const Icon(Icons.category_outlined),
+            title: const Text('الفئات'),
+            onTap: () {
+              Navigator.pop(context);
+              onSelect(3);
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('تسجيل الخروج'),
+            onTap: () {
+              Navigator.pop(context);
+              onSignOut();
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _UnavailableDestination extends StatelessWidget {
+  const _UnavailableDestination();
+
+  @override
+  Widget build(BuildContext context) => const Scaffold(
+    body: SafeArea(
+      child: FixFlowStateView(
+        kind: FixFlowStateKind.empty,
+        title: 'هذه الوجهة غير متاحة حاليًا.',
+      ),
     ),
   );
 }
@@ -742,10 +817,10 @@ class _DashboardBottomNavigation extends StatelessWidget {
   final ValueChanged<int> onSelect;
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => NavigationBar(
-      selectedIndex: selected.clamp(0, 3),
+    builder: (context, constraints) => FixFlowBottomNavigation(
+      selectedIndex: selected,
       onDestinationSelected: onSelect,
-      labelBehavior: constraints.maxWidth < 500
+      labelBehavior: constraints.maxWidth < 360
           ? NavigationDestinationLabelBehavior.alwaysHide
           : NavigationDestinationLabelBehavior.onlyShowSelected,
       destinations: const [

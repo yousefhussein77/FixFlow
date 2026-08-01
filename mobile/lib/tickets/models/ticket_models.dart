@@ -43,11 +43,10 @@ class SelectedPhoto {
   final Uint8List bytes;
   String? validate() {
     if (!const {'image/jpeg', 'image/png', 'image/webp'}.contains(mimeType))
-      return 'Use a JPEG, PNG, or WebP photo.';
+      return 'استخدم صورة بصيغة JPEG أو PNG أو WebP.';
     if (bytes.length > 10 * 1024 * 1024)
-      return 'Each photo must be 10 MB or smaller.';
-    if (!_contentMatchesMime())
-      return 'The photo content does not match a supported image type.';
+      return 'يجب ألا يتجاوز حجم كل صورة 10 ميجابايت.';
+    if (!_contentMatchesMime()) return 'محتوى الصورة لا يطابق صيغة صور مدعومة.';
     return null;
   }
 

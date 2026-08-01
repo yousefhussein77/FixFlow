@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../theme/fixflow_theme_extensions.dart';
 
+String fixFlowStatusLabel(BuildContext context, String status) =>
+    Theme.of(
+      context,
+    ).extension<FixFlowSemanticColors>()?.status(status).label ??
+    status;
+
 class FixFlowStatusChip extends StatelessWidget {
   const FixFlowStatusChip({required this.status, super.key});
   final String status;
@@ -18,7 +24,7 @@ class FixFlowStatusChip extends StatelessWidget {
           icon: Icons.label_outline,
           label: status,
         );
-    return _SemanticBadge(style: style, kind: 'Status');
+    return _SemanticBadge(style: style, kind: 'الحالة');
   }
 }
 
@@ -38,7 +44,7 @@ class FixFlowPriorityBadge extends StatelessWidget {
           icon: Icons.flag_outlined,
           label: priority,
         );
-    return _SemanticBadge(style: style, kind: 'Priority');
+    return _SemanticBadge(style: style, kind: 'الأولوية');
   }
 }
 

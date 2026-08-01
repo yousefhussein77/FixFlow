@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/fixflow_theme_extensions.dart';
+
 enum FixFlowFeedbackKind { information, success, warning, error }
 
 void showFixFlowSnackBar(
@@ -10,10 +12,17 @@ void showFixFlowSnackBar(
   VoidCallback? onAction,
 }) {
   final scheme = Theme.of(context).colorScheme;
+  final semantic = Theme.of(context).extension<FixFlowSemanticColors>();
   final (background, foreground) = switch (kind) {
     FixFlowFeedbackKind.information => (scheme.primary, scheme.onPrimary),
-    FixFlowFeedbackKind.success => (const Color(0xFF166534), Colors.white),
-    FixFlowFeedbackKind.warning => (const Color(0xFF92400E), Colors.white),
+    FixFlowFeedbackKind.success => (
+      semantic?.success.foreground ?? scheme.primary,
+      semantic?.success.container ?? scheme.onPrimary,
+    ),
+    FixFlowFeedbackKind.warning => (
+      semantic?.warning.foreground ?? scheme.secondary,
+      semantic?.warning.container ?? scheme.onSecondary,
+    ),
     FixFlowFeedbackKind.error => (scheme.error, scheme.onError),
   };
   ScaffoldMessenger.of(context).showSnackBar(

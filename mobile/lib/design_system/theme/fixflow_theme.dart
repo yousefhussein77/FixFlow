@@ -16,12 +16,12 @@ abstract final class FixFlowTheme {
     final dark = brightness == Brightness.dark;
     final scheme = dark
         ? const ColorScheme.dark(
-            primary: Color(0xFF8AA7FF),
-            onPrimary: Color(0xFF071A45),
-            primaryContainer: Color(0xFF163B91),
+            primary: FixFlowColors.brandSecondary,
+            onPrimary: Colors.white,
+            primaryContainer: Color(0xFF203A78),
             onPrimaryContainer: Color(0xFFDCE5FF),
-            secondary: Color(0xFFFFB55C),
-            onSecondary: Color(0xFF422100),
+            secondary: FixFlowColors.brandAccent,
+            onSecondary: Color(0xFF241100),
             secondaryContainer: Color(0xFF653600),
             onSecondaryContainer: Color(0xFFFFDDB8),
             error: FixFlowColors.darkError,
@@ -69,16 +69,32 @@ abstract final class FixFlowTheme {
       textTheme: textTheme,
       extensions: [semantic],
       visualDensity: VisualDensity.standard,
+      focusColor: scheme.primary.withValues(alpha: .18),
+      hoverColor: dark ? FixFlowColors.darkHover : FixFlowColors.lightHover,
+      splashColor: scheme.primary.withValues(alpha: .12),
+      highlightColor: scheme.primary.withValues(alpha: .08),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _FixFlowPageTransitionsBuilder(),
+          TargetPlatform.iOS: _FixFlowPageTransitionsBuilder(),
+          TargetPlatform.windows: _FixFlowPageTransitionsBuilder(),
+          TargetPlatform.macOS: _FixFlowPageTransitionsBuilder(),
+          TargetPlatform.linux: _FixFlowPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: FixFlowElevation.flat,
+        scrolledUnderElevation: FixFlowElevation.low,
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
         titleTextStyle: textTheme.titleLarge,
+        surfaceTintColor: Colors.transparent,
       ),
       cardTheme: CardThemeData(
         elevation: FixFlowElevation.low,
         color: scheme.surface,
+        surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(FixFlowRadius.large),
@@ -86,11 +102,48 @@ abstract final class FixFlowTheme {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          minimumSize: const Size(FixFlowSpacing.touch, FixFlowSpacing.touch),
-          padding: const EdgeInsets.symmetric(horizontal: FixFlowSpacing.md),
-          shape: rounded,
-          textStyle: textTheme.labelLarge,
+        style: ButtonStyle(
+          minimumSize: const WidgetStatePropertyAll(
+            Size(FixFlowSpacing.touch, FixFlowSpacing.touch),
+          ),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: FixFlowSpacing.md),
+          ),
+          shape: WidgetStatePropertyAll(rounded),
+          textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return dark
+                  ? FixFlowColors.darkDisabledSurface
+                  : FixFlowColors.lightDisabledSurface;
+            }
+            if (states.contains(WidgetState.pressed)) {
+              return dark ? FixFlowColors.darkPressed : const Color(0xFF173D91);
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return dark
+                  ? const Color(0xFF315DD5)
+                  : FixFlowColors.brandSecondary;
+            }
+            return scheme.primary;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return dark
+                  ? FixFlowColors.darkDisabledContent
+                  : FixFlowColors.lightDisabledContent;
+            }
+            return scheme.onPrimary;
+          }),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return scheme.onPrimary.withValues(alpha: .16);
+            }
+            if (states.contains(WidgetState.pressed)) {
+              return scheme.onPrimary.withValues(alpha: .12);
+            }
+            return null;
+          }),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -100,6 +153,7 @@ abstract final class FixFlowTheme {
           shape: rounded,
           side: BorderSide(color: scheme.outline, width: FixFlowBorders.subtle),
           textStyle: textTheme.labelLarge,
+          foregroundColor: scheme.primary,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -107,6 +161,7 @@ abstract final class FixFlowTheme {
           minimumSize: const Size(FixFlowSpacing.touch, FixFlowSpacing.touch),
           shape: rounded,
           textStyle: textTheme.labelLarge,
+          foregroundColor: scheme.primary,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -134,6 +189,20 @@ abstract final class FixFlowTheme {
           borderRadius: BorderRadius.circular(FixFlowRadius.medium),
           borderSide: BorderSide(color: scheme.error),
         ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(FixFlowRadius.medium),
+          borderSide: BorderSide(
+            color: scheme.error,
+            width: FixFlowBorders.focus,
+          ),
+        ),
+        labelStyle: textTheme.bodyMedium?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+        helperStyle: textTheme.bodySmall?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+        errorStyle: textTheme.bodySmall?.copyWith(color: scheme.error),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: scheme.surface,
@@ -163,8 +232,61 @@ abstract final class FixFlowTheme {
       dividerTheme: DividerThemeData(color: scheme.outlineVariant),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
       navigationBarTheme: NavigationBarThemeData(
+        height: 72,
+        elevation: 0,
+        backgroundColor: scheme.surface,
+        surfaceTintColor: Colors.transparent,
         indicatorColor: scheme.primaryContainer,
-        labelTextStyle: WidgetStatePropertyAll(textTheme.labelMedium),
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(FixFlowRadius.large),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return IconThemeData(
+              color: dark
+                  ? FixFlowColors.darkDisabledContent
+                  : FixFlowColors.lightDisabledContent,
+            );
+          }
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: scheme.primary, size: 24);
+          }
+          return IconThemeData(color: scheme.onSurfaceVariant, size: 23);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return textTheme.labelMedium?.copyWith(
+            color: selected ? scheme.primary : scheme.onSurfaceVariant,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          );
+        }),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: scheme.surface,
+        indicatorColor: scheme.primaryContainer,
+        selectedIconTheme: IconThemeData(color: scheme.primary),
+        unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+        selectedLabelTextStyle: textTheme.labelLarge?.copyWith(
+          color: scheme.primary,
+        ),
+        unselectedLabelTextStyle: textTheme.labelMedium?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+      ),
+      drawerTheme: DrawerThemeData(
+        backgroundColor: scheme.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(),
+      ),
+      listTileTheme: ListTileThemeData(
+        minVerticalPadding: FixFlowSpacing.xs,
+        iconColor: scheme.onSurfaceVariant,
+        textColor: scheme.onSurface,
+        selectedColor: scheme.primary,
+        selectedTileColor: scheme.primaryContainer.withValues(alpha: .65),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(FixFlowRadius.medium),
+        ),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
@@ -221,7 +343,12 @@ abstract final class FixFlowTheme {
       warning: warning,
       error: error,
       statuses: {
-        'new': info,
+        'new': _style(
+          info.foreground,
+          info.container,
+          Icons.fiber_new_outlined,
+          'جديدة',
+        ),
         'assigned': _style(
           const Color(0xFF5B21B6),
           const Color(0xFFEDE9FE),
@@ -275,25 +402,25 @@ abstract final class FixFlowTheme {
       const Color(0xFFDBEAFE),
       const Color(0xFF1E3A8A),
       Icons.info_outline,
-      'Information',
+      'معلومات',
     );
     final success = _style(
       const Color(0xFFDCFCE7),
       const Color(0xFF14532D),
       Icons.check_circle_outline,
-      'Success',
+      'نجاح',
     );
     final warning = _style(
       const Color(0xFFFEF3C7),
       const Color(0xFF78350F),
       Icons.warning_amber_outlined,
-      'Warning',
+      'تحذير',
     );
     final error = _style(
       const Color(0xFFFEE2E2),
       const Color(0xFF7F1D1D),
       Icons.error_outline,
-      'Error',
+      'خطأ',
     );
     return FixFlowSemanticColors(
       information: info,
@@ -301,7 +428,12 @@ abstract final class FixFlowTheme {
       warning: warning,
       error: error,
       statuses: {
-        'new': info,
+        'new': _style(
+          info.foreground,
+          info.container,
+          Icons.fiber_new_outlined,
+          'جديدة',
+        ),
         'assigned': _style(
           const Color(0xFFEDE9FE),
           const Color(0xFF4C1D95),
@@ -347,6 +479,36 @@ abstract final class FixFlowTheme {
           'أولوية عالية',
         ),
       },
+    );
+  }
+}
+
+class _FixFlowPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _FixFlowPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (route.isFirst) return child;
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, .018),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
     );
   }
 }

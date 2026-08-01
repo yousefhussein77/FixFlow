@@ -127,7 +127,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   onTap: () => _edit(category),
                   title: Text(category.name),
                   subtitle: Text(
-                    '${category.departmentName} • ${category.isActive ? 'Active' : 'Inactive'}',
+                    '${category.departmentName} • ${category.isActive ? 'نشطة' : 'غير نشطة'}',
                   ),
                   trailing: Switch(
                     value: category.isActive,

@@ -30,14 +30,17 @@ class FixFlowDestinationTile extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    minTileHeight: FixFlowSpacing.touch,
-    leading: Icon(icon),
-    title: Text(label),
-    subtitle: supportingText == null ? null : Text(supportingText!),
-    trailing: const Icon(Icons.chevron_right),
-    onTap: onTap,
-  );
+  Widget build(BuildContext context) {
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    return ListTile(
+      minTileHeight: FixFlowSpacing.touch,
+      leading: Icon(icon),
+      title: Text(label),
+      subtitle: supportingText == null ? null : Text(supportingText!),
+      trailing: Icon(rtl ? Icons.chevron_left : Icons.chevron_right),
+      onTap: onTap,
+    );
+  }
 }
 
 class FixFlowPagination extends StatelessWidget {
@@ -53,7 +56,7 @@ class FixFlowPagination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Page $currentPage of $lastPage',
+    label: 'الصفحة $currentPage من $lastPage',
     child: Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -62,7 +65,7 @@ class FixFlowPagination extends StatelessWidget {
             width: FixFlowIcons.minimumTarget,
             height: FixFlowIcons.minimumTarget,
           ),
-          tooltip: 'Previous page',
+          tooltip: 'الصفحة السابقة',
           onPressed: currentPage > 1 ? onPrevious : null,
           icon: const Icon(Icons.chevron_left),
         ),
@@ -75,7 +78,7 @@ class FixFlowPagination extends StatelessWidget {
             width: FixFlowIcons.minimumTarget,
             height: FixFlowIcons.minimumTarget,
           ),
-          tooltip: 'Next page',
+          tooltip: 'الصفحة التالية',
           onPressed: currentPage < lastPage ? onNext : null,
           icon: const Icon(Icons.chevron_right),
         ),
@@ -89,17 +92,28 @@ class FixFlowBottomNavigation extends StatelessWidget {
     required this.selectedIndex,
     required this.destinations,
     required this.onDestinationSelected,
+    this.labelBehavior = NavigationDestinationLabelBehavior.onlyShowSelected,
     super.key,
   });
   final int selectedIndex;
   final List<NavigationDestination> destinations;
   final ValueChanged<int> onDestinationSelected;
+  final NavigationDestinationLabelBehavior labelBehavior;
 
   @override
-  Widget build(BuildContext context) => NavigationBar(
-    selectedIndex: selectedIndex,
-    destinations: destinations,
-    onDestinationSelected: onDestinationSelected,
+  Widget build(BuildContext context) => Material(
+    color: Theme.of(context).colorScheme.surface,
+    elevation: 8,
+    shadowColor: Colors.black.withValues(alpha: .08),
+    child: SafeArea(
+      top: false,
+      child: NavigationBar(
+        selectedIndex: selectedIndex.clamp(0, destinations.length - 1),
+        labelBehavior: labelBehavior,
+        destinations: destinations,
+        onDestinationSelected: onDestinationSelected,
+      ),
+    ),
   );
 }
 

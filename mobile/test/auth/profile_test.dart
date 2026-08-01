@@ -25,7 +25,7 @@ void main() {
     );
     expect(find.text('Reporter'), findsOneWidget);
     expect(find.text('reporter@example.com'), findsOneWidget);
-    expect(find.text('reporter'), findsOneWidget);
+    expect(find.text('مُبلّغ'), findsOneWidget);
     expect(find.textContaining('token'), findsNothing);
     expect(find.textContaining('password'), findsNothing);
   });
@@ -56,6 +56,7 @@ void main() {
       await tester.scrollUntilVisible(
         find.byKey(const Key('logout_submit')),
         200,
+        scrollable: find.byType(Scrollable).first,
       );
       expect(
         tester.getSemantics(find.byKey(const Key('logout_submit'))).label,

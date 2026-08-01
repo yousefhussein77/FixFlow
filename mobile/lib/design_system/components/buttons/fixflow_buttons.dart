@@ -50,7 +50,7 @@ class FixFlowButton extends StatelessWidget {
       button: true,
       enabled: action != null,
       label: label,
-      value: loading ? 'Loading' : null,
+      value: loading ? 'جارٍ التحميل' : null,
       child: switch (variant) {
         FixFlowButtonVariant.primary ||
         FixFlowButtonVariant.destructive => FilledButton(
