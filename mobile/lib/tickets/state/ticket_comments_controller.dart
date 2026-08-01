@@ -26,13 +26,24 @@ class TicketCommentsController extends ChangeNotifier {
   String draft = '';
   String? message, _submissionToken;
   int _generation = 0;
+  Future<void>? _loadInFlight;
   bool get isSubmitting => status == TicketCommentsStatus.submitting;
   void updateDraft(String value) {
     draft = value;
     notifyListeners();
   }
 
-  Future<void> load() async {
+  Future<void> load() {
+    final active = _loadInFlight;
+    if (active != null) return active;
+    final operation = _load();
+    _loadInFlight = operation;
+    return operation.whenComplete(() {
+      if (identical(_loadInFlight, operation)) _loadInFlight = null;
+    });
+  }
+
+  Future<void> _load() async {
     final generation = ++_generation;
     status = TicketCommentsStatus.loading;
     notifyListeners();

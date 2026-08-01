@@ -12,6 +12,8 @@ import 'tickets/repositories/ticket_rating_repository.dart';
 import 'tickets/services/ticket_photo_picker.dart';
 import 'design_system/theme/fixflow_theme.dart';
 import 'design_system/theme/fixflow_theme_controller.dart';
+import 'accounts/repositories/account_request_repository.dart';
+import 'notifications/repositories/notification_repository.dart';
 
 class FixFlowApp extends StatefulWidget {
   const FixFlowApp({
@@ -24,6 +26,8 @@ class FixFlowApp extends StatefulWidget {
     this.ticketRatingRepository,
     this.ticketPhotoPicker,
     this.themeController,
+    this.accountRequestRepository,
+    this.notificationRepository,
     super.key,
   });
   final AuthController controller;
@@ -35,6 +39,8 @@ class FixFlowApp extends StatefulWidget {
   final TicketRatingRepository? ticketRatingRepository;
   final TicketPhotoPicker? ticketPhotoPicker;
   final ThemeController? themeController;
+  final AccountRequestRepository? accountRequestRepository;
+  final NotificationRepository? notificationRepository;
 
   @override
   State<FixFlowApp> createState() => _FixFlowAppState();
@@ -86,6 +92,8 @@ class _FixFlowAppState extends State<FixFlowApp> {
           ticketRatingRepository: widget.ticketRatingRepository,
           ticketPhotoPicker: widget.ticketPhotoPicker,
           themeController: _themeController,
+          accountRequestRepository: widget.accountRequestRepository,
+          notificationRepository: widget.notificationRepository,
         ),
       ),
     );

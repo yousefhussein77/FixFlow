@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../accounts/repositories/account_request_repository.dart';
+import '../../accounts/screens/account_requests_screen.dart';
 import '../../auth/models/auth_models.dart';
 import '../../auth/state/auth_controller.dart';
 import '../../design_system/brand/fixflow_logo.dart';
@@ -15,6 +17,8 @@ import '../../design_system/tokens/fixflow_spacing.dart';
 import '../../reference_data/screens/category_screen.dart';
 import '../../reference_data/screens/department_screen.dart';
 import '../../reference_data/state/reference_controller.dart';
+import '../../notifications/widgets/notification_bell.dart';
+import '../../notifications/widgets/notification_host.dart';
 import '../models/admin_ticket_models.dart';
 import '../repositories/admin_ticket_repository.dart';
 import '../repositories/ticket_comment_repository.dart';
@@ -28,6 +32,7 @@ class AdministratorDashboardScreen extends StatefulWidget {
     this.referenceController,
     this.commentRepository,
     this.themeController,
+    this.accountRequestRepository,
     super.key,
   });
 
@@ -36,6 +41,7 @@ class AdministratorDashboardScreen extends StatefulWidget {
   final ReferenceController? referenceController;
   final TicketCommentRepository? commentRepository;
   final ThemeController? themeController;
+  final AccountRequestRepository? accountRequestRepository;
 
   @override
   State<AdministratorDashboardScreen> createState() =>
@@ -48,6 +54,7 @@ class _AdministratorDashboardScreenState
   late final PageController _pageController;
   late final List<GlobalKey<NavigatorState>> _navigatorKeys;
   int _selectedDestination = 0;
+  Future<void>? _dashboardRefreshInFlight;
 
   @override
   void initState() {
@@ -56,7 +63,10 @@ class _AdministratorDashboardScreenState
       ..addListener(_changed)
       ..load();
     _pageController = PageController();
-    _navigatorKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
+    _navigatorKeys = List.generate(
+      widget.accountRequestRepository == null ? 4 : 5,
+      (_) => GlobalKey<NavigatorState>(),
+    );
   }
 
   @override
@@ -71,8 +81,26 @@ class _AdministratorDashboardScreenState
     if (mounted) setState(() {});
   }
 
+  Future<void> _refreshDashboard() {
+    final active = _dashboardRefreshInFlight;
+    if (active != null) return active;
+    if (controller.state.status == AdminTicketListStatus.loading ||
+        controller.state.status == AdminTicketListStatus.loadingMore) {
+      return Future<void>.value();
+    }
+    final operation = controller.load();
+    _dashboardRefreshInFlight = operation;
+    return operation.whenComplete(() {
+      if (identical(_dashboardRefreshInFlight, operation)) {
+        _dashboardRefreshInFlight = null;
+      }
+    });
+  }
+
   Future<void> _select(int index) async {
-    if (index > 1 && widget.referenceController == null) return;
+    if ((index == 2 || index == 3) && widget.referenceController == null) {
+      return;
+    }
     if (index == _selectedDestination) {
       _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
       return;
@@ -85,42 +113,59 @@ class _AdministratorDashboardScreenState
     );
   }
 
-  Widget _destination(int index, UserProfile? profile) => switch (index) {
-    0 => SafeArea(
-      child: SingleChildScrollView(
-        key: const PageStorageKey('administrator_dashboard_scroll'),
-        padding: const EdgeInsets.all(FixFlowSpacing.lg),
-        child: FixFlowConstrainedContent(
-          maxWidth: 1120,
-          child: _DashboardContent(
-            profile: profile,
-            controller: controller,
-            onRefresh: controller.load,
-            onAllTickets: () => _select(1),
-            onDepartments: () => _select(2),
-            onCategories: () => _select(3),
-            onTeam: _showTechnicians,
-            onSignOut: widget.authController.logout,
-            themeController: widget.themeController,
-            showThemeControl: MediaQuery.sizeOf(context).width >= 900,
-            showAccountControl: MediaQuery.sizeOf(context).width >= 900,
+  Widget _destination(int index, UserProfile? profile, bool wide) =>
+      switch (index) {
+        0 => SafeArea(
+          child: RefreshIndicator(
+            key: const Key('administrator_pull_to_refresh'),
+            color: FixFlowColors.brandPrimary,
+            onRefresh: _refreshDashboard,
+            child: SingleChildScrollView(
+              key: const PageStorageKey('administrator_dashboard_scroll'),
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(FixFlowSpacing.lg),
+              child: FixFlowConstrainedContent(
+                maxWidth: 1120,
+                child: _DashboardContent(
+                  profile: profile,
+                  controller: controller,
+                  onRefresh: controller.load,
+                  onAllTickets: () => _select(1),
+                  onDepartments: () => _select(2),
+                  onCategories: () => _select(3),
+                  onTeam: _showTechnicians,
+                  onAccounts: widget.accountRequestRepository == null
+                      ? null
+                      : () => _select(4),
+                  onSignOut: widget.authController.logout,
+                  themeController: widget.themeController,
+                  showThemeControl: MediaQuery.sizeOf(context).width >= 900,
+                  showAccountControl: MediaQuery.sizeOf(context).width >= 900,
+                  showNotificationControl: wide,
+                ),
+              ),
+            ),
           ),
         ),
-      ),
-    ),
-    1 => AdminTicketListScreen(
-      repository: widget.repository,
-      commentRepository: widget.commentRepository,
-    ),
-    2 =>
-      widget.referenceController == null
-          ? const _UnavailableDestination()
-          : DepartmentScreen(controller: widget.referenceController!),
-    _ =>
-      widget.referenceController == null
-          ? const _UnavailableDestination()
-          : CategoryScreen(controller: widget.referenceController!),
-  };
+        1 => AdminTicketListScreen(
+          repository: widget.repository,
+          commentRepository: widget.commentRepository,
+        ),
+        2 =>
+          widget.referenceController == null
+              ? const _UnavailableDestination()
+              : DepartmentScreen(controller: widget.referenceController!),
+        3 =>
+          widget.referenceController == null
+              ? const _UnavailableDestination()
+              : CategoryScreen(controller: widget.referenceController!),
+        _ =>
+          widget.accountRequestRepository == null
+              ? const _UnavailableDestination()
+              : AccountRequestsScreen(
+                  repository: widget.accountRequestRepository!,
+                ),
+      };
 
   Future<void> _showTechnicians() async {
     showDialog<void>(
@@ -210,13 +255,10 @@ class _AdministratorDashboardScreenState
                     ],
                   ),
                   actions: [
+                    if (NotificationScope.maybeOf(context) != null)
+                      const NotificationBell(),
                     if (widget.themeController != null)
                       _ThemeToggle(controller: widget.themeController!),
-                    IconButton(
-                      tooltip: 'تحديث لوحة التحكم',
-                      onPressed: controller.load,
-                      icon: const Icon(Icons.refresh),
-                    ),
                     if (profile != null)
                       PopupMenuButton<String>(
                         tooltip: 'قائمة الحساب',
@@ -242,6 +284,7 @@ class _AdministratorDashboardScreenState
                   selected: _selectedDestination,
                   onSelect: _select,
                   onSignOut: _confirmSignOut,
+                  showAccountRequests: widget.accountRequestRepository != null,
                 ),
           body: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -251,19 +294,20 @@ class _AdministratorDashboardScreenState
                   selected: _selectedDestination,
                   onSelect: _select,
                   onSignOut: _confirmSignOut,
+                  showAccountRequests: widget.accountRequestRepository != null,
                 ),
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 4,
+                  itemCount: _navigatorKeys.length,
                   itemBuilder: (context, index) => MediaQuery.removePadding(
                     context: context,
                     removeBottom: true,
                     child: Navigator(
                       key: _navigatorKeys[index],
                       onGenerateRoute: (_) => MaterialPageRoute<void>(
-                        builder: (_) => _destination(index, profile),
+                        builder: (_) => _destination(index, profile, wide),
                         settings: RouteSettings(name: '/administrator/$index'),
                       ),
                     ),
@@ -277,6 +321,7 @@ class _AdministratorDashboardScreenState
               : _DashboardBottomNavigation(
                   selected: _selectedDestination,
                   onSelect: _select,
+                  showAccountRequests: widget.accountRequestRepository != null,
                 ),
         );
       },
@@ -293,10 +338,12 @@ class _DashboardContent extends StatelessWidget {
     required this.onDepartments,
     required this.onCategories,
     required this.onTeam,
+    this.onAccounts,
     required this.onSignOut,
     this.themeController,
     this.showThemeControl = true,
     this.showAccountControl = true,
+    this.showNotificationControl = false,
   });
 
   final UserProfile? profile;
@@ -306,10 +353,12 @@ class _DashboardContent extends StatelessWidget {
   final VoidCallback onDepartments;
   final VoidCallback onCategories;
   final VoidCallback onTeam;
+  final VoidCallback? onAccounts;
   final VoidCallback onSignOut;
   final ThemeController? themeController;
   final bool showThemeControl;
   final bool showAccountControl;
+  final bool showNotificationControl;
 
   @override
   Widget build(BuildContext context) {
@@ -328,11 +377,11 @@ class _DashboardContent extends StatelessWidget {
         children: [
           _Header(
             profile: profile,
-            onRefresh: onRefresh,
             onSignOut: onSignOut,
             themeController: themeController,
             showThemeControl: showThemeControl,
             showAccountControl: showAccountControl,
+            showNotificationControl: showNotificationControl,
           ),
           const SizedBox(height: FixFlowSpacing.lg),
           FixFlowStateView(
@@ -363,11 +412,11 @@ class _DashboardContent extends StatelessWidget {
       children: [
         _Header(
           profile: profile,
-          onRefresh: onRefresh,
           onSignOut: onSignOut,
           themeController: themeController,
           showThemeControl: showThemeControl,
           showAccountControl: showAccountControl,
+          showNotificationControl: showNotificationControl,
         ),
         const SizedBox(height: FixFlowSpacing.lg),
         _MetricGrid(
@@ -428,24 +477,17 @@ class _DashboardContent extends StatelessWidget {
               icon: Icons.groups_outlined,
               onPressed: onTeam,
             ),
+            if (onAccounts != null)
+              _ActionButton(
+                key: const Key('dashboard_account_requests'),
+                label: 'طلبات الحسابات',
+                icon: Icons.how_to_reg_outlined,
+                onPressed: onAccounts!,
+              ),
           ],
         ),
         const SizedBox(height: FixFlowSpacing.lg),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'النشاط الأخير',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-            IconButton(
-              onPressed: onRefresh,
-              tooltip: 'تحديث لوحة التحكم',
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
+        Text('النشاط الأخير', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: FixFlowSpacing.sm),
         if (tickets.isEmpty)
           const FixFlowStateView(
@@ -462,18 +504,18 @@ class _DashboardContent extends StatelessWidget {
 class _Header extends StatelessWidget {
   const _Header({
     required this.profile,
-    required this.onRefresh,
     required this.onSignOut,
     this.themeController,
     this.showThemeControl = true,
     this.showAccountControl = true,
+    this.showNotificationControl = false,
   });
   final UserProfile? profile;
-  final VoidCallback onRefresh;
   final VoidCallback onSignOut;
   final ThemeController? themeController;
   final bool showThemeControl;
   final bool showAccountControl;
+  final bool showNotificationControl;
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
@@ -528,11 +570,7 @@ class _Header extends StatelessWidget {
           Expanded(child: heading),
           if (showThemeControl && themeController != null)
             _ThemeToggle(controller: themeController!),
-          IconButton(
-            tooltip: 'تحديث لوحة التحكم',
-            onPressed: onRefresh,
-            icon: const Icon(Icons.refresh),
-          ),
+          if (showNotificationControl) const NotificationBell(),
           if (showAccountControl && account != null) account,
         ],
       );
@@ -670,10 +708,12 @@ class _DashboardSidebar extends StatelessWidget {
     required this.selected,
     required this.onSelect,
     required this.onSignOut,
+    required this.showAccountRequests,
   });
   final int selected;
   final ValueChanged<int> onSelect;
   final VoidCallback onSignOut;
+  final bool showAccountRequests;
   @override
   Widget build(BuildContext context) => SizedBox(
     width: 232,
@@ -693,24 +733,29 @@ class _DashboardSidebar extends StatelessWidget {
               selectedIndex: selected,
               onDestinationSelected: onSelect,
               labelType: NavigationRailLabelType.all,
-              destinations: const [
-                NavigationRailDestination(
+              destinations: [
+                const NavigationRailDestination(
                   icon: Icon(Icons.dashboard_outlined),
                   selectedIcon: Icon(Icons.dashboard),
                   label: Text('لوحة التحكم'),
                 ),
-                NavigationRailDestination(
+                const NavigationRailDestination(
                   icon: Icon(Icons.inbox_outlined),
                   label: Text('كل التذاكر'),
                 ),
-                NavigationRailDestination(
+                const NavigationRailDestination(
                   icon: Icon(Icons.apartment_outlined),
                   label: Text('الأقسام'),
                 ),
-                NavigationRailDestination(
+                const NavigationRailDestination(
                   icon: Icon(Icons.category_outlined),
                   label: Text('الفئات'),
                 ),
+                if (showAccountRequests)
+                  const NavigationRailDestination(
+                    icon: Icon(Icons.how_to_reg_outlined),
+                    label: Text('طلبات الحسابات'),
+                  ),
               ],
             ),
           ),
@@ -732,10 +777,12 @@ class _DashboardDrawer extends StatelessWidget {
     required this.selected,
     required this.onSelect,
     required this.onSignOut,
+    required this.showAccountRequests,
   });
   final int selected;
   final ValueChanged<int> onSelect;
   final VoidCallback onSignOut;
+  final bool showAccountRequests;
   @override
   Widget build(BuildContext context) => Drawer(
     width: (MediaQuery.sizeOf(context).width * .84).clamp(248, 304),
@@ -752,6 +799,16 @@ class _DashboardDrawer extends StatelessWidget {
               onSelect(0);
             },
           ),
+          if (showAccountRequests)
+            ListTile(
+              selected: selected == 4,
+              leading: const Icon(Icons.how_to_reg_outlined),
+              title: const Text('طلبات الحسابات'),
+              onTap: () {
+                Navigator.pop(context);
+                onSelect(4);
+              },
+            ),
           ListTile(
             selected: selected == 1,
             leading: const Icon(Icons.inbox_outlined),
@@ -812,9 +869,11 @@ class _DashboardBottomNavigation extends StatelessWidget {
   const _DashboardBottomNavigation({
     required this.selected,
     required this.onSelect,
+    required this.showAccountRequests,
   });
   final int selected;
   final ValueChanged<int> onSelect;
+  final bool showAccountRequests;
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) => FixFlowBottomNavigation(
@@ -823,24 +882,29 @@ class _DashboardBottomNavigation extends StatelessWidget {
       labelBehavior: constraints.maxWidth < 360
           ? NavigationDestinationLabelBehavior.alwaysHide
           : NavigationDestinationLabelBehavior.onlyShowSelected,
-      destinations: const [
-        NavigationDestination(
+      destinations: [
+        const NavigationDestination(
           icon: Icon(Icons.dashboard_outlined),
           selectedIcon: Icon(Icons.dashboard),
           label: 'لوحة التحكم',
         ),
-        NavigationDestination(
+        const NavigationDestination(
           icon: Icon(Icons.inbox_outlined),
           label: 'التذاكر',
         ),
-        NavigationDestination(
+        const NavigationDestination(
           icon: Icon(Icons.apartment_outlined),
           label: 'الأقسام',
         ),
-        NavigationDestination(
+        const NavigationDestination(
           icon: Icon(Icons.category_outlined),
           label: 'الفئات',
         ),
+        if (showAccountRequests)
+          const NavigationDestination(
+            icon: Icon(Icons.how_to_reg_outlined),
+            label: 'الحسابات',
+          ),
       ],
     ),
   );

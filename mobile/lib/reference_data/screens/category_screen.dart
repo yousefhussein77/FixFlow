@@ -93,6 +93,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final s = widget.controller.state;
     return FixFlowPage(
       title: const Text('الفئات'),
+      onRefresh: s.status == model.ReferenceStatus.loading
+          ? () async {}
+          : widget.controller.loadCategories,
       floatingActionButton: FixFlowFloatingButton(
         key: const Key('category_add'),
         icon: Icons.add,

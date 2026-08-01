@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/components/buttons/fixflow_buttons.dart';
 import '../../design_system/components/forms/fixflow_fields.dart';
+import '../../design_system/components/feedback/fixflow_feedback.dart';
 import '../../design_system/layout/fixflow_auth_page.dart';
 import '../../design_system/tokens/fixflow_spacing.dart';
 import '../state/auth_controller.dart';
@@ -25,10 +26,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirmation = TextEditingController();
+  String _role = 'reporter';
+  late AuthViewStatus _lastStatus;
 
   @override
   void initState() {
     super.initState();
+    _lastStatus = widget.controller.state.status;
     widget.controller.addListener(_changed);
   }
 
@@ -38,6 +42,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_changed);
       widget.controller.addListener(_changed);
+      _lastStatus = widget.controller.state.status;
     }
   }
 
@@ -52,7 +57,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _changed() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    final status = widget.controller.state.status;
+    if (status == AuthViewStatus.registrationPending &&
+        _lastStatus != AuthViewStatus.registrationPending) {
+      _name.clear();
+      _email.clear();
+      _password.clear();
+      _confirmation.clear();
+      _role = 'reporter';
+    }
+    _lastStatus = status;
+    setState(() {});
   }
 
   @override
@@ -60,8 +76,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final state = widget.controller.state;
     final loading = state.status == AuthViewStatus.loading;
     return FixFlowAuthPage(
-      title: 'إنشاء حساب مُبلّغ',
-      subtitle: 'أبلغ عن طلبات الصيانة وتابعها من مكان واحد.',
+      title: 'طلب إنشاء حساب',
+      subtitle: 'أرسل بياناتك إلى الإدارة للمراجعة قبل تفعيل الحساب.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -71,6 +87,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _name,
             error: state.fieldErrors['name']?.firstOrNull,
             onChanged: (_) => widget.controller.clearFieldError('name'),
+          ),
+          const SizedBox(height: FixFlowSpacing.sm),
+          FixFlowDropdownField<String>(
+            key: const Key('register_role'),
+            label: 'نوع الحساب المطلوب',
+            items: const ['reporter', 'technician'],
+            itemLabel: (value) => value == 'technician' ? 'فني' : 'مُبلّغ',
+            value: _role,
+            error: state.fieldErrors['role']?.firstOrNull,
+            onChanged: loading
+                ? null
+                : (value) {
+                    if (value == null) return;
+                    setState(() => _role = value);
+                    widget.controller.clearFieldError('role');
+                  },
           ),
           const SizedBox(height: FixFlowSpacing.sm),
           FixFlowTextField(
@@ -87,7 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             label: 'كلمة المرور',
             controller: _password,
             obscureText: true,
-            helper: 'من 12 إلى 128 حرفاً، مع حرف ورقم',
+            helper: 'من 12 إلى 128 حرفًا، مع حرف كبير وحرف صغير ورقم',
             error: state.fieldErrors['password']?.firstOrNull,
             onChanged: (_) => widget.controller.clearFieldError('password'),
           ),
@@ -103,16 +135,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           if (state.message != null) ...[
             const SizedBox(height: FixFlowSpacing.sm),
-            Text(
-              state.message!,
-              key: const Key('register_error'),
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            Semantics(
+              liveRegion: true,
+              child: FixFlowBanner(
+                key: state.status == AuthViewStatus.registrationPending
+                    ? const Key('register_success')
+                    : const Key('register_error'),
+                message: state.message!,
+                kind: state.status == AuthViewStatus.registrationPending
+                    ? FixFlowFeedbackKind.success
+                    : FixFlowFeedbackKind.error,
+              ),
             ),
           ],
           const SizedBox(height: FixFlowSpacing.md),
           FixFlowButton(
             buttonKey: const Key('register_submit'),
-            label: 'إنشاء الحساب',
+            label: 'إرسال طلب الحساب',
             loading: loading,
             onPressed: loading
                 ? null
@@ -121,6 +160,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     email: _email.text,
                     password: _password.text,
                     passwordConfirmation: _confirmation.text,
+                    role: _role,
                   ),
           ),
           FixFlowButton(

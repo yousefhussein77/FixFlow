@@ -8,6 +8,7 @@ abstract interface class AuthRepository {
     required String email,
     required String password,
     required String passwordConfirmation,
+    String role = 'reporter',
   });
   Future<UserProfile> login({required String email, required String password});
   Future<UserProfile?> restore();
@@ -31,15 +32,15 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
     required String passwordConfirmation,
+    String role = 'reporter',
   }) async {
-    final session = await _api.register(
+    return _api.register(
       name: name,
       email: email,
       password: password,
       passwordConfirmation: passwordConfirmation,
+      role: role,
     );
-    await _tokenStore.write(session.token);
-    return session.profile;
   }
 
   @override

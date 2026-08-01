@@ -7,11 +7,14 @@ use App\Exceptions\TicketNotFoundException;
 use App\Models\Ticket;
 use App\Models\TicketStatusHistory;
 use App\Models\User;
+use App\Services\Notifications\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AssignTicket
 {
+    public function __construct(private readonly NotificationService $notifications) {}
+
     public function execute(User $actor, string $reference, int $technicianId): Ticket
     {
         return DB::transaction(function () use ($actor, $reference, $technicianId): Ticket {
@@ -23,7 +26,7 @@ class AssignTicket
                 throw new AssignmentConflictException;
             }
             $technician = User::query()->find($technicianId);
-            if (! $technician || ! $technician->is_active || $technician->role !== User::ROLE_TECHNICIAN) {
+            if (! $technician || ! $technician->isApproved() || $technician->role !== User::ROLE_TECHNICIAN) {
                 throw ValidationException::withMessages(['technician_id' => ['The selected technician is not eligible for assignment.']]);
             }
             $occurredAt = now();
@@ -33,6 +36,7 @@ class AssignTicket
                 'to_status' => Ticket::STATUS_ASSIGNED, 'actor_id' => $actor->id,
                 'assigned_technician_id' => $technician->id, 'occurred_at' => $occurredAt,
             ]);
+            $this->notifications->ticketAssigned($ticket);
 
             return $ticket->load(['reporter', 'department', 'category', 'assignedTechnician']);
         }, 3);

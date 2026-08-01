@@ -81,6 +81,9 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
     final s = widget.controller.state;
     return FixFlowPage(
       title: const Text('الأقسام'),
+      onRefresh: s.status == ReferenceStatus.loading
+          ? () async {}
+          : widget.controller.loadDepartments,
       floatingActionButton: FixFlowFloatingButton(
         key: const Key('department_add'),
         icon: Icons.add,

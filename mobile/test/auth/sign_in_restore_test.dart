@@ -33,6 +33,57 @@ void main() {
     expect(controller.state.profile?.email, 'reporter@example.com');
   });
 
+  for (final scenario in [
+    (
+      AuthFailureKind.pending,
+      AuthViewStatus.accountPending,
+      'طلب إنشاء الحساب قيد مراجعة الإدارة.',
+    ),
+    (
+      AuthFailureKind.rejected,
+      AuthViewStatus.accountRejected,
+      'تم رفض طلب إنشاء الحساب. يمكنك التواصل مع الإدارة للمزيد من المعلومات.',
+    ),
+    (
+      AuthFailureKind.inactive,
+      AuthViewStatus.accountInactive,
+      'هذا الحساب غير نشط. يرجى التواصل مع الإدارة.',
+    ),
+  ]) {
+    testWidgets('${scenario.$2.name} remains on editable sign-in form', (
+      tester,
+    ) async {
+      final controller = AuthController(
+        RestoreRepository(failure: AuthFailure(scenario.$1, scenario.$3)),
+      );
+      await tester.pumpWidget(
+        MaterialApp(home: SignInScreen(controller: controller)),
+      );
+      await tester.enterText(
+        find.byKey(const Key('login_email')),
+        'user@example.com',
+      );
+      await tester.enterText(
+        find.byKey(const Key('login_password')),
+        'StrongPassword123',
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('login_submit')),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byKey(const Key('login_submit')));
+      await tester.pumpAndSettle();
+
+      expect(controller.state.status, scenario.$2);
+      expect(find.text(scenario.$3), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byKey(const Key('login_email'))).enabled,
+        isTrue,
+      );
+    });
+  }
+
   test('late restoration cannot replace a signed-out generation', () async {
     final completer = Completer<UserProfile?>();
     final controller = AuthController(
@@ -108,7 +159,7 @@ void main() {
     expect(passwordBeforeEdit.enabled, isTrue);
     expect(passwordBeforeEdit.readOnly, isFalse);
     expect(emailBeforeEdit.decoration?.errorText, isNotNull);
-    expect(passwordBeforeEdit.decoration?.errorText, isNotNull);
+    expect(passwordBeforeEdit.decoration?.errorText, isNull);
 
     await tester.enterText(
       find.byKey(const Key('login_email')),
@@ -265,5 +316,6 @@ class RestoreRepository implements AuthRepository {
     required String email,
     required String password,
     required String passwordConfirmation,
+    String role = 'reporter',
   }) async => profileValue;
 }

@@ -58,6 +58,11 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
     final s = controller.state;
     return FixFlowPage(
       title: const Text('تذاكري'),
+      onRefresh:
+          s.status == MyTicketsStatus.loading ||
+              s.status == MyTicketsStatus.loadingMore
+          ? () async {}
+          : controller.load,
       body: switch (s.status) {
         MyTicketsStatus.loading => const FixFlowStateView(
           kind: FixFlowStateKind.loading,

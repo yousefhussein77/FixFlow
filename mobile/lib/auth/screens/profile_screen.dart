@@ -164,14 +164,7 @@ class _ProfileOverview extends StatelessWidget {
       final profile = state.profile;
       return FixFlowPage(
         title: const Text('ملفي الشخصي'),
-        actions: [
-          FixFlowIconButton(
-            key: const Key('profile_refresh'),
-            onPressed: state.isLoading ? null : controller.refreshProfile,
-            label: 'تحديث الملف الشخصي',
-            icon: Icons.refresh,
-          ),
-        ],
+        onRefresh: state.isLoading ? () async {} : controller.refreshProfile,
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

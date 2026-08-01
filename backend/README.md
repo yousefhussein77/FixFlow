@@ -4,14 +4,18 @@
 
 FixFlow exposes a Sanctum bearer-token authentication API:
 
-- `POST /api/register` creates an active reporter only. Required fields: `name`, `email`, `password`, and `password_confirmation`.
-- `POST /api/login` signs in an active account with email and password.
+- `POST /api/register` creates a pending reporter or technician request and never returns a token. Required fields are `name`, `email`, `password`, and `password_confirmation`; optional `role` defaults to `reporter`.
+- `POST /api/login` signs in only an approved active account with email and password.
 - `GET /api/profile` returns only the bearer token owner's profile.
 - `POST /api/logout` revokes only the bearer token used for the request.
 
-Registration passwords are 12–128 characters, require at least one letter and one number, and must match confirmation. Emails are trimmed and lowercased. All responses use the envelope documented in `specs/003-user-auth/contracts/auth.openapi.yaml`.
+Registration passwords are 12–128 characters, require mixed-case letters and a number, and must match confirmation. Names and emails are normalized before validation and storage. Administrators review requests through `GET /api/admin/account-requests` and the corresponding `approve` and `reject` routes. See [`docs/account-approval.md`](../docs/account-approval.md) for the lifecycle, validation, endpoints, and migration behavior.
 
-Run `php artisan test` and `vendor\\bin\\pint --test` before integration. The development seeder creates reporter, technician, administrator, and inactive fixtures with the factory's development-only password; public registration never creates privileged users.
+Run `php artisan test`, `composer validate --strict`, and `vendor\\bin\\pint --test` before integration. The development seeder creates approved reporter, technician, administrator, and inactive fixtures with the factory's development-only password; public registration never creates administrator users.
+
+## In-app notifications
+
+Authenticated users receive role-specific, Arabic in-app notifications for supported account and ticket events. See [`docs/notifications.md`](../docs/notifications.md) for endpoints, transaction and deduplication guarantees, event mappings, and client behavior.
 
 ## Reference data API
 

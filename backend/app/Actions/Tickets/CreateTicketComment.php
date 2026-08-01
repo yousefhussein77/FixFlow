@@ -5,12 +5,16 @@ namespace App\Actions\Tickets;
 use App\Exceptions\TicketNotFoundException;
 use App\Models\TicketComment;
 use App\Models\User;
+use App\Services\Notifications\NotificationService;
 use App\Services\Tickets\TicketCommentAccess;
 use Illuminate\Support\Facades\DB;
 
 class CreateTicketComment
 {
-    public function __construct(private readonly TicketCommentAccess $access) {}
+    public function __construct(
+        private readonly TicketCommentAccess $access,
+        private readonly NotificationService $notifications,
+    ) {}
 
     /** @return array{comment: TicketComment, replayed: bool} */
     public function execute(User $actor, string $role, string $reference, string $content, string $submissionToken): array
@@ -35,6 +39,7 @@ class CreateTicketComment
                 'content' => $content,
                 'created_at' => now(),
             ])->load('author');
+            $this->notifications->commentCreated($comment, $submissionToken);
 
             return ['comment' => $comment, 'replayed' => false];
         }, 3);

@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\Notifications\NotificationService;
 use App\Support\TicketEvent;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -17,8 +18,13 @@ use Throwable;
 
 class CreateTicket
 {
+    private NotificationService $notifications;
+
     /** @param null|callable(UploadedFile,string,string):bool $photoWriter */
-    public function __construct(private $photoWriter = null) {}
+    public function __construct(private $photoWriter = null, ?NotificationService $notifications = null)
+    {
+        $this->notifications = $notifications ?? app(NotificationService::class);
+    }
 
     public function execute(User $reporter, array $data): Ticket
     {
@@ -59,6 +65,7 @@ class CreateTicket
                     $safeName = basename(str_replace('\\', '/', $photo->getClientOriginalName()));
                     $ticket->photos()->create(['disk' => $disk, 'path' => $path, 'original_name' => $safeName, 'mime_type' => $photo->getMimeType(), 'size' => $photo->getSize(), 'position' => $position]);
                 }
+                $this->notifications->ticketCreated($ticket);
 
                 return $ticket;
             }, 3);

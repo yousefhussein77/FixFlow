@@ -1,6 +1,9 @@
 enum AuthFailureKind {
   validation,
   unauthenticated,
+  pending,
+  rejected,
+  inactive,
   offline,
   server,
   contract,
@@ -15,6 +18,7 @@ class UserProfile {
     required this.role,
     required this.isActive,
     required this.createdAt,
+    this.accountStatus = 'approved',
   });
 
   final int id;
@@ -23,6 +27,7 @@ class UserProfile {
   final String role;
   final bool isActive;
   final DateTime createdAt;
+  final String accountStatus;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     try {
@@ -33,6 +38,9 @@ class UserProfile {
         role: json['role'] as String,
         isActive: json['is_active'] as bool,
         createdAt: DateTime.parse(json['created_at'] as String),
+        accountStatus:
+            json['account_status'] as String? ??
+            ((json['is_active'] as bool) ? 'approved' : 'inactive'),
       );
     } catch (_) {
       throw const AuthFailure(

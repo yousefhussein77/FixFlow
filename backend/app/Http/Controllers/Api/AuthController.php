@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\Auth\LoginUser;
 use App\Actions\Auth\LogoutUser;
-use App\Actions\Auth\RegisterReporter;
+use App\Actions\Auth\RegisterPendingAccount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
@@ -15,16 +15,13 @@ use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
-    public function register(RegisterRequest $request, RegisterReporter $register): JsonResponse
+    public function register(RegisterRequest $request, RegisterPendingAccount $register): JsonResponse
     {
-        $session = $register->execute($request->validated());
+        $user = $register->execute($request->validated());
 
         return ApiResponse::success(
-            message: 'Reporter account created.',
-            data: [
-                'user' => new UserResource($session['user']),
-                'token' => $session['token'],
-            ],
+            message: 'تم إرسال طلب إنشاء الحساب بنجاح إلى الإدارة للمراجعة.',
+            data: ['user' => new UserResource($user)],
             status: 201,
         );
     }

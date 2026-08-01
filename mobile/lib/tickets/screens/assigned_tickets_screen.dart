@@ -55,13 +55,11 @@ class _AssignedTicketsScreenState extends State<AssignedTicketsScreen> {
   @override
   Widget build(BuildContext context) => FixFlowPage(
     title: const Text('التذاكر المسندة'),
-    actions: [
-      FixFlowIconButton(
-        icon: Icons.refresh,
-        label: 'تحديث التذاكر المسندة',
-        onPressed: controller.load,
-      ),
-    ],
+    onRefresh:
+        controller.status == AssignedTicketsStatus.loading ||
+            controller.status == AssignedTicketsStatus.loadingMore
+        ? () async {}
+        : controller.load,
     body: switch (controller.status) {
       AssignedTicketsStatus.loading => const FixFlowStateView(
         kind: FixFlowStateKind.loading,

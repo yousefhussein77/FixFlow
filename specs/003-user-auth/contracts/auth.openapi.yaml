@@ -1,15 +1,15 @@
 openapi: 3.1.0
 info:
   title: FixFlow Authentication API
-  version: 1.0.0
-  description: Initial reporter registration and authenticated session contract.
+  version: 2.0.0
+  description: Account-request registration, administrator approval, and authenticated session contract.
 servers:
   - url: /api
 paths:
   /register:
     post:
-      operationId: registerReporter
-      summary: Register and authenticate a reporter
+      operationId: requestAccount
+      summary: Submit a reporter or technician account request
       security: []
       requestBody:
         required: true
@@ -19,11 +19,11 @@ paths:
               $ref: '#/components/schemas/RegisterRequest'
       responses:
         '201':
-          description: Reporter registered
+          description: Pending account request created without an authentication token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSuccess'
+                $ref: '#/components/schemas/RegistrationSuccess'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -48,6 +48,8 @@ paths:
                 $ref: '#/components/schemas/AuthSuccess'
         '401':
           $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/AccountStatusError'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -82,7 +84,85 @@ paths:
           $ref: '#/components/responses/UnauthenticatedError'
         '500':
           $ref: '#/components/responses/ServerError'
+  /admin/account-requests:
+    get:
+      operationId: listAccountRequests
+      summary: List public-role account requests by status
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, approved, rejected, inactive, all]
+            default: pending
+      responses:
+        '200':
+          description: Account requests returned newest first
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccountRequestListSuccess' }
+        '401': { $ref: '#/components/responses/UnauthenticatedError' }
+        '403': { $ref: '#/components/responses/ForbiddenError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/account-requests/{account}/approve:
+    patch:
+      operationId: approveAccountRequest
+      summary: Approve one pending public-role account request
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        '200':
+          description: Account approved with immutable reviewer audit fields
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccountRequestSuccess' }
+        '401': { $ref: '#/components/responses/UnauthenticatedError' }
+        '403': { $ref: '#/components/responses/ForbiddenError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/account-requests/{account}/reject:
+    patch:
+      operationId: rejectAccountRequest
+      summary: Reject one pending public-role account request
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                rejection_reason:
+                  type: [string, 'null']
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Account rejected with immutable reviewer audit fields
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccountRequestSuccess' }
+        '401': { $ref: '#/components/responses/UnauthenticatedError' }
+        '403': { $ref: '#/components/responses/ForbiddenError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
 components:
+  parameters:
+    AccountId:
+      in: path
+      name: account
+      required: true
+      schema: { type: integer, minimum: 1 }
   securitySchemes:
     bearerAuth:
       type: http
@@ -95,8 +175,8 @@ components:
       properties:
         name:
           type: string
-          minLength: 1
-          maxLength: 255
+          minLength: 2
+          maxLength: 100
         email:
           type: string
           format: email
@@ -109,6 +189,11 @@ components:
         password_confirmation:
           type: string
           format: password
+          maxLength: 128
+        role:
+          type: string
+          enum: [reporter, technician]
+          default: reporter
     LoginRequest:
       type: object
       additionalProperties: false
@@ -117,20 +202,35 @@ components:
         email:
           type: string
           format: email
+          maxLength: 255
         password:
           type: string
           format: password
+          maxLength: 128
     Profile:
       type: object
       additionalProperties: false
-      required: [id, name, email, role, is_active, created_at]
+      required: [id, name, email, role, is_active, account_status, created_at]
       properties:
         id: { type: integer }
         name: { type: string }
         email: { type: string, format: email }
         role: { type: string, enum: [reporter, technician, administrator] }
         is_active: { type: boolean }
+        account_status: { type: string, enum: [pending, approved, rejected, inactive] }
         created_at: { type: string, format: date-time }
+    RegistrationData:
+      type: object
+      additionalProperties: false
+      required: [user]
+      properties:
+        user: { $ref: '#/components/schemas/Profile' }
+    RegistrationSuccess:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/RegistrationData' }
     AuthData:
       type: object
       required: [user, token]
@@ -143,6 +243,43 @@ components:
         - type: object
           properties:
             data: { $ref: '#/components/schemas/AuthData' }
+    Reviewer:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+    AccountRequest:
+      type: object
+      additionalProperties: false
+      required: [id, name, email, requested_role, status, registered_at, approved_by, approved_at, rejected_by, rejected_at, rejection_reason]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        requested_role: { type: string, enum: [reporter, technician] }
+        status: { type: string, enum: [pending, approved, rejected, inactive] }
+        registered_at: { type: string, format: date-time }
+        approved_by: { oneOf: [{ $ref: '#/components/schemas/Reviewer' }, { type: 'null' }] }
+        approved_at: { type: [string, 'null'], format: date-time }
+        rejected_by: { oneOf: [{ $ref: '#/components/schemas/Reviewer' }, { type: 'null' }] }
+        rejected_at: { type: [string, 'null'], format: date-time }
+        rejection_reason: { type: [string, 'null'], maxLength: 1000 }
+    AccountRequestSuccess:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/AccountRequest' }
+    AccountRequestListSuccess:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/AccountRequest' }
     ProfileSuccess:
       allOf:
         - $ref: '#/components/schemas/SuccessEnvelope'
@@ -187,6 +324,26 @@ components:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     UnauthenticatedError:
       description: Credentials or active session are not accepted
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    AccountStatusError:
+      description: Credentials are valid but the account is not approved and active
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    ForbiddenError:
+      description: The authenticated account is not an administrator
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    NotFoundError:
+      description: The account request does not exist
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    ConflictError:
+      description: The account request is not pending and remains unchanged
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }

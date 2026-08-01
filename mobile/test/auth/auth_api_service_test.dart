@@ -10,6 +10,84 @@ const _safeServerMessage =
     'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.';
 
 void main() {
+  test('registration accepts pending user payload without a token', () async {
+    final service = AuthApiService(
+      baseUri: Uri.parse('https://fixflow.test'),
+      client: MockClient((request) async {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(body['role'], 'technician');
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode({
+              'success': true,
+              'message':
+                  'تم إرسال طلب إنشاء الحساب بنجاح إلى الإدارة للمراجعة.',
+              'data': {
+                'user': {
+                  'id': 7,
+                  'name': 'فني جديد',
+                  'email': 'tech@example.com',
+                  'role': 'technician',
+                  'is_active': false,
+                  'account_status': 'pending',
+                  'created_at': '2026-08-01T00:00:00Z',
+                },
+              },
+            }),
+          ),
+          201,
+        );
+      }),
+    );
+
+    final profile = await service.register(
+      name: 'فني جديد',
+      email: 'tech@example.com',
+      password: 'StrongPassword123',
+      passwordConfirmation: 'StrongPassword123',
+      role: 'technician',
+    );
+
+    expect(profile.accountStatus, 'pending');
+    expect(profile.isActive, isFalse);
+  });
+
+  for (final failure in [
+    ('ACCOUNT_PENDING', AuthFailureKind.pending),
+    ('ACCOUNT_REJECTED', AuthFailureKind.rejected),
+    ('ACCOUNT_INACTIVE', AuthFailureKind.inactive),
+  ]) {
+    test('login maps ${failure.$1} without exposing backend details', () async {
+      final service = AuthApiService(
+        baseUri: Uri.parse('https://fixflow.test'),
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'success': false,
+              'message': 'SQLSTATE secret internal message',
+              'data': null,
+              'errors': null,
+              'code': failure.$1,
+            }),
+            403,
+          ),
+        ),
+      );
+
+      await expectLater(
+        service.login(email: 'user@example.com', password: 'Password1234'),
+        throwsA(
+          isA<AuthFailure>()
+              .having((value) => value.kind, 'kind', failure.$2)
+              .having(
+                (value) => value.message,
+                'safe message',
+                isNot(contains('SQLSTATE')),
+              ),
+        ),
+      );
+    });
+  }
   test('profile response is decoded as UTF-8', () async {
     final service = AuthApiService(
       baseUri: Uri.parse('https://fixflow.test'),

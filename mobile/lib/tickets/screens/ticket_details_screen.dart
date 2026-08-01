@@ -69,6 +69,9 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
     if (t == null) {
       return FixFlowPage(
         title: const Text('تفاصيل التذكرة'),
+        onRefresh: s.status == TicketDetailsStatus.loading
+            ? () async {}
+            : () => controller.load(widget.reference),
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -95,6 +98,9 @@ class _TicketDetailsScreenState extends State<TicketDetailsScreen> {
 
     return FixFlowPage(
       title: const Text('تفاصيل التذكرة'),
+      onRefresh: s.status == TicketDetailsStatus.loading
+          ? () async {}
+          : () => controller.load(widget.reference),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

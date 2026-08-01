@@ -57,13 +57,11 @@ class _AdminTicketListScreenState extends State<AdminTicketListScreen> {
   @override
   Widget build(BuildContext context) => FixFlowPage(
     title: const Text('كل التذاكر'),
-    actions: [
-      FixFlowIconButton(
-        icon: Icons.refresh,
-        label: 'تحديث التذاكر',
-        onPressed: controller.load,
-      ),
-    ],
+    onRefresh:
+        controller.state.status == AdminTicketListStatus.loading ||
+            controller.state.status == AdminTicketListStatus.loadingMore
+        ? () async {}
+        : controller.load,
     body: switch (controller.state.status) {
       AdminTicketListStatus.loading => const FixFlowStateView(
         kind: FixFlowStateKind.loading,

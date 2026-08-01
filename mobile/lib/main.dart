@@ -19,6 +19,10 @@ import 'tickets/repositories/ticket_rating_repository.dart';
 import 'tickets/services/ticket_rating_api_service.dart';
 import 'tickets/services/ticket_api_service.dart';
 import 'tickets/services/ticket_photo_picker.dart';
+import 'accounts/repositories/account_request_repository.dart';
+import 'accounts/services/account_request_api_service.dart';
+import 'notifications/repositories/notification_repository.dart';
+import 'notifications/services/notification_api_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,6 +65,14 @@ void main() {
         tokenStore,
       ),
       ticketPhotoPicker: const TicketPhotoPicker(),
+      accountRequestRepository: AccountRequestRepositoryImpl(
+        AccountRequestApiService(Uri.parse(apiUrl)),
+        tokenStore,
+      ),
+      notificationRepository: NotificationRepositoryImpl(
+        NotificationApiService(Uri.parse(apiUrl)),
+        tokenStore,
+      ),
     ),
   );
 }

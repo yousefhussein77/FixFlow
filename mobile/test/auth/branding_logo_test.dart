@@ -108,5 +108,6 @@ class _Repository implements AuthRepository {
     required String email,
     required String password,
     required String passwordConfirmation,
+    String role = 'reporter',
   }) => Future.value(profileValue);
 }

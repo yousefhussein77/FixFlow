@@ -14,11 +14,12 @@ class AuthApiService {
   final Uri baseUri;
   final http.Client _client;
 
-  Future<AuthSession> register({
+  Future<UserProfile> register({
     required String name,
     required String email,
     required String password,
     required String passwordConfirmation,
+    String role = 'reporter',
   }) async {
     final envelope = await _send(
       'POST',
@@ -28,9 +29,19 @@ class AuthApiService {
         'email': email,
         'password': password,
         'password_confirmation': passwordConfirmation,
+        'role': role,
       },
     );
-    return _session(envelope);
+    final data = envelope['data'];
+    if (data is! Map<String, dynamic> ||
+        data['user'] is! Map<String, dynamic> ||
+        data.containsKey('token')) {
+      throw const AuthFailure(
+        AuthFailureKind.contract,
+        'تعذر معالجة استجابة إنشاء الحساب.',
+      );
+    }
+    return UserProfile.fromJson(data['user'] as Map<String, dynamic>);
   }
 
   Future<AuthSession> login({
@@ -138,7 +149,8 @@ class AuthApiService {
       return envelope;
     }
 
-    final message = _messageForStatus(response.statusCode);
+    final code = envelope['code'] as String?;
+    final message = _messageForStatus(response.statusCode, code);
     final errors = <String, List<String>>{};
     final rawErrors = envelope['errors'];
     if (rawErrors is Map<String, dynamic>) {
@@ -160,14 +172,30 @@ class AuthApiService {
     if (response.statusCode == 401) {
       throw AuthFailure(AuthFailureKind.unauthenticated, message);
     }
+    if (code == 'ACCOUNT_PENDING') {
+      throw AuthFailure(AuthFailureKind.pending, message);
+    }
+    if (code == 'ACCOUNT_REJECTED') {
+      throw AuthFailure(AuthFailureKind.rejected, message);
+    }
+    if (code == 'ACCOUNT_INACTIVE' || code == 'ACCOUNT_NOT_APPROVED') {
+      throw AuthFailure(AuthFailureKind.inactive, message);
+    }
     throw AuthFailure(AuthFailureKind.server, message);
   }
 
-  String _messageForStatus(int statusCode) => switch (statusCode) {
-    401 => 'بيانات الدخول غير صحيحة أو انتهت الجلسة.',
-    403 => 'ليست لديك صلاحية لتنفيذ هذا الإجراء.',
-    422 => 'تحقق من البيانات المدخلة ثم حاول مجدداً.',
-    _ => 'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
+  String _messageForStatus(int statusCode, String? code) => switch (code) {
+    'ACCOUNT_PENDING' => 'طلب إنشاء الحساب قيد مراجعة الإدارة.',
+    'ACCOUNT_REJECTED' =>
+      'تم رفض طلب إنشاء الحساب. يمكنك التواصل مع الإدارة للمزيد من المعلومات.',
+    'ACCOUNT_INACTIVE' ||
+    'ACCOUNT_NOT_APPROVED' => 'هذا الحساب غير نشط. يرجى التواصل مع الإدارة.',
+    _ => switch (statusCode) {
+      401 => 'بيانات الدخول غير صحيحة أو انتهت الجلسة.',
+      403 => 'ليست لديك صلاحية لتنفيذ هذا الإجراء.',
+      422 => 'تحقق من البيانات المدخلة ثم حاول مجدداً.',
+      _ => 'تعذر الاتصال بالخادم. تأكد من تشغيل الخدمة ثم حاول مرة أخرى.',
+    },
   };
 
   String _validationMessageForField(String field) => switch (field) {
@@ -175,6 +203,7 @@ class AuthApiService {
     'email' => 'تحقق من عنوان البريد الإلكتروني.',
     'password' => 'تحقق من كلمة المرور.',
     'password_confirmation' => 'تأكد من تطابق كلمتي المرور.',
+    'role' => 'اختر نوع حساب مدعومًا.',
     _ => 'تحقق من القيمة المدخلة.',
   };
 

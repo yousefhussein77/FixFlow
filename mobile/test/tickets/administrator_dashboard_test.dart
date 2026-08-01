@@ -1,4 +1,6 @@
 import 'package:fixflow/auth/models/auth_models.dart';
+import 'package:fixflow/accounts/models/account_request_models.dart';
+import 'package:fixflow/accounts/repositories/account_request_repository.dart';
 import 'package:fixflow/auth/repositories/auth_repository.dart';
 import 'package:fixflow/auth/state/auth_controller.dart';
 import 'package:fixflow/design_system/theme/fixflow_theme.dart';
@@ -7,21 +9,51 @@ import 'package:fixflow/tickets/models/admin_ticket_models.dart';
 import 'package:fixflow/tickets/models/ticket_models.dart';
 import 'package:fixflow/tickets/repositories/admin_ticket_repository.dart';
 import 'package:fixflow/tickets/screens/administrator_dashboard_screen.dart';
+import 'package:fixflow/notifications/models/notification_models.dart';
+import 'package:fixflow/notifications/repositories/notification_repository.dart';
+import 'package:fixflow/notifications/widgets/notification_host.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('administrator dashboard header exposes unread notifications', (
+    tester,
+  ) async {
+    final auth = AuthController(_AuthRepository())..restore();
+    await tester.pumpAndSettle();
+    await tester.binding.setSurfaceSize(const Size(1440, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: FixFlowTheme.light(),
+        home: NotificationHost(
+          repository: _NotificationRepository(),
+          refreshInterval: const Duration(days: 1),
+          onNavigate: (_, _) async => null,
+          child: AdministratorDashboardScreen(
+            authController: auth,
+            repository: _AdminRepository(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('notification_bell')), findsOneWidget);
+    expect(find.byKey(const Key('notification_badge')), findsOneWidget);
+  });
+
   testWidgets('administrator dashboard presents real counts and actions', (
     tester,
   ) async {
     final auth = AuthController(_AuthRepository())..restore();
+    final repository = _AdminRepository();
     await tester.pumpAndSettle();
     await tester.pumpWidget(
       MaterialApp(
         theme: FixFlowTheme.light(),
         home: AdministratorDashboardScreen(
           authController: auth,
-          repository: _AdminRepository(),
+          repository: repository,
         ),
       ),
     );
@@ -32,6 +64,13 @@ void main() {
     expect(find.text('بانتظار الإسناد'), findsOneWidget);
     expect(find.byKey(const Key('dashboard_all_tickets')), findsOneWidget);
     expect(find.text('النشاط الأخير'), findsOneWidget);
+    expect(find.byIcon(Icons.refresh), findsNothing);
+    expect(repository.listCalls, 1);
+    final pull = find.byKey(const Key('administrator_pull_to_refresh'));
+    expect(pull, findsOneWidget);
+    await tester.drag(pull, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(repository.listCalls, 2);
   });
 
   testWidgets('dashboard renders the approved bitmap logo variants', (
@@ -126,6 +165,7 @@ void main() {
             child: AdministratorDashboardScreen(
               authController: auth,
               repository: _AdminRepository(),
+              accountRequestRepository: _EmptyAccountRequestRepository(),
             ),
           ),
         ),
@@ -314,8 +354,10 @@ void main() {
 class _AdminRepository implements AdminTicketRepository {
   _AdminRepository({this.failure});
   final TicketFailureKind? failure;
+  int listCalls = 0;
   @override
   Future<AdminTicketPage> list({int page = 1, int perPage = 20}) async {
+    listCalls++;
     if (failure != null) {
       throw TicketFailure(failure!, 'Network unavailable.');
     }
@@ -385,7 +427,20 @@ class _AuthRepository implements AuthRepository {
     required String email,
     required String password,
     required String passwordConfirmation,
+    String role = 'reporter',
   }) => Future.value(value);
+}
+
+class _EmptyAccountRequestRepository implements AccountRequestRepository {
+  @override
+  Future<List<AccountRequest>> list(AccountRequestStatus status) async => [];
+
+  @override
+  Future<AccountRequest> approve(int id) => throw UnimplementedError();
+
+  @override
+  Future<AccountRequest> reject(int id, {String? reason}) =>
+      throw UnimplementedError();
 }
 
 class _MemoryThemeStore implements ThemePreferenceStore {
@@ -394,4 +449,26 @@ class _MemoryThemeStore implements ThemePreferenceStore {
   Future<String?> read() async => value;
   @override
   Future<void> write(String next) async => value = next;
+}
+
+class _NotificationRepository implements NotificationRepository {
+  final item = AppNotification(
+    id: 1,
+    type: 'account_request.created',
+    title: 'طلب حساب جديد',
+    message: 'وصل طلب حساب جديد.',
+    navigationTarget: 'admin.account_requests',
+    payload: const {'account_id': 2},
+    createdAt: DateTime.utc(2026, 8, 1),
+  );
+
+  @override
+  Future<List<AppNotification>> list() async => [item];
+  @override
+  Future<int> unreadCount() async => 1;
+  @override
+  Future<AppNotification> markRead(int id) async =>
+      item.copyWith(readAt: DateTime.utc(2026, 8, 1));
+  @override
+  Future<int> markAllRead() async => 1;
 }

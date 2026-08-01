@@ -8,11 +8,13 @@ The Flutter app provides registration, sign-in, session restoration, own-profile
 flutter run --dart-define=FIXFLOW_API_URL=http://10.0.2.2:8000
 ```
 
-The default URL is the Android emulator host alias above. Registration creates reporter accounts only. Authentication screens distinguish validation, unauthenticated, offline, secure-storage, and server/contract failures and disable duplicate submission while loading.
+The default URL is the Android emulator host alias above. Registration submits a reporter or technician account request for administrator review and does not sign the applicant in. Authentication screens distinguish pending, rejected, inactive, validation, unauthenticated, offline, secure-storage, and server/contract failures and disable duplicate submission while loading.
 
 Validate with `dart format --output=none --set-exit-if-changed lib test`, `flutter analyze`, and `flutter test`.
 
-Administrators see department and category management controls on their authenticated profile. Reference-data state distinguishes loading, populated/empty success, validation, authorization loss, offline, stale conflict, and server/contract failure. Reusable active-option loading is available for later ticket forms without implementing tickets.
+Administrators can review pending, approved, and rejected account requests in addition to the existing ticket and reference-data workflows. Approval and rejection require confirmation and refresh the authoritative list after completion. See [`docs/account-approval.md`](../docs/account-approval.md) for API and architecture details.
+
+Authenticated role screens include an unread notification bell and Arabic notification center. Notifications refresh every minute while the app is open and when it returns to the foreground. See [`docs/notifications.md`](../docs/notifications.md) for API, event, destination, and safety details.
 
 ## Getting Started
 

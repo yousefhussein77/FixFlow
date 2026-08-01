@@ -74,13 +74,9 @@ class _TechnicianTicketDetailsScreenState
   @override
   Widget build(BuildContext context) => FixFlowPage(
     title: Text(widget.reference),
-    actions: [
-      FixFlowIconButton(
-        icon: Icons.refresh,
-        label: 'تحديث التذكرة',
-        onPressed: controller.load,
-      ),
-    ],
+    onRefresh: controller.status == TechnicianDetailStatus.loading
+        ? () async {}
+        : controller.load,
     body: switch (controller.status) {
       TechnicianDetailStatus.loading => const FixFlowStateView(
         kind: FixFlowStateKind.loading,

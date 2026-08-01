@@ -33,6 +33,7 @@ class EmptyRepository implements AuthRepository {
     required String email,
     required String password,
     required String passwordConfirmation,
+    String role = 'reporter',
   }) => throw UnimplementedError();
   @override
   Future<UserProfile?> restore() async => null;

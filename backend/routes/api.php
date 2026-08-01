@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Api\AdminAccountRequestController;
 use App\Http\Controllers\Api\AdminTechnicianOptionController;
 use App\Http\Controllers\Api\AdminTicketCommentController;
 use App\Http\Controllers\Api\AdminTicketController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReferenceOptionController;
 use App\Http\Controllers\Api\ReporterTicketCommentController;
 use App\Http\Controllers\Api\ReporterTicketRatingController;
@@ -18,6 +20,11 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('/notifications/read-all', [NotificationController::class, 'readAll']);
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])
+        ->whereNumber('notification');
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/options/departments', [ReferenceOptionController::class, 'departments']);
@@ -35,6 +42,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     });
 
     Route::prefix('admin')->middleware('administrator')->group(function (): void {
+        Route::get('/account-requests', [AdminAccountRequestController::class, 'index']);
+        Route::patch('/account-requests/{account}/approve', [AdminAccountRequestController::class, 'approve']);
+        Route::patch('/account-requests/{account}/reject', [AdminAccountRequestController::class, 'reject']);
         Route::get('/tickets', [AdminTicketController::class, 'index']);
         Route::get('/options/technicians', AdminTechnicianOptionController::class);
         Route::patch('/tickets/{reference}/assignment', [AdminTicketController::class, 'assign']);

@@ -33,7 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 AuthEvent::record('auth.request_validation', 'denied');
 
                 return ApiResponse::error(
-                    message: 'The submitted data is invalid.',
+                    message: 'البيانات المدخلة غير صالحة.',
                     code: 'VALIDATION_ERROR',
                     status: 422,
                     errors: $exception->errors(),
@@ -46,7 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 AuthEvent::record('auth.protected_operation', 'unauthenticated');
 
                 return ApiResponse::error(
-                    message: 'Authentication required.',
+                    message: 'يرجى تسجيل الدخول للمتابعة.',
                     code: 'UNAUTHENTICATED',
                     status: 401,
                 );
@@ -56,7 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (Throwable $exception, Request $request) {
             if ($request->is('api/*') && ! config('app.debug')) {
                 return ApiResponse::error(
-                    message: 'An unexpected server error occurred.',
+                    message: 'حدث خطأ غير متوقع. حاول مرة أخرى لاحقًا.',
                     code: 'SERVER_ERROR',
                     status: 500,
                 );
